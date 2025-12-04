@@ -62,6 +62,7 @@ export default function Destinations() {
               >
                 <div className="aspect-[16/11] overflow-hidden relative">
                   <img
+                    loading="lazy" decoding="async"
                     src={destination.image}
                     alt={destination.nameUk}
                     className="w-full h-full object-cover group-hover:scale-110 transition duration-500"

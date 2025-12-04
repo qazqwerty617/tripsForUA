@@ -5,7 +5,7 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated, user } = useAuthStore()
 
   if (!isAuthenticated || user?.role !== 'admin') {
-    return <Navigate to="/admin/login" replace />
+    return <Navigate to="/mng-x7k9p2-secure/login" replace />
   }
 
   return children

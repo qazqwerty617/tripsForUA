@@ -107,7 +107,7 @@ export default function AdminBookings() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <Link to="/admin" className="text-primary-600 hover:text-primary-700 mb-2 inline-flex items-center">
+              <Link to="/mng-x7k9p2-secure" className="text-primary-600 hover:text-primary-700 mb-2 inline-flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Назад
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">Бронювання</h1>

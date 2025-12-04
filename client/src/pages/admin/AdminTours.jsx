@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Upload, X, Search } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import CountryCitySelector from '../../components/CountryCitySelector'
+import { countriesData } from '../../utils/countriesData'
 
 export default function AdminTours() {
   const [tours, setTours] = useState([])
@@ -11,12 +14,16 @@ export default function AdminTours() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingTour, setEditingTour] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [formData, setFormData] = useState({
     destination: '',
+    country: '',
+    city: '',
     title: '',
     description: '',
     shortDescription: '',
     price: '',
+    originalPrice: '',
     duration: '',
     startDate: '',
     endDate: '',
@@ -27,12 +34,23 @@ export default function AdminTours() {
     included: [''],
     notIncluded: [''],
     featured: false,
-    status: 'active'
+    status: 'active',
+    tourType: 'exclusive',
+    contactTelegram: '',
+    contactInstagram: ''
   })
 
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Auto-fill title from city and country
+  useEffect(() => {
+    const auto = `${formData.city ? formData.city + (formData.country ? ', ' : '') : ''}${formData.country || ''}`.trim()
+    if (auto && auto !== formData.title) {
+      setFormData(prev => ({ ...prev, title: auto }))
+    }
+  }, [formData.country, formData.city])
 
   const fetchData = async () => {
     try {
@@ -51,14 +69,40 @@ export default function AdminTours() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Check required fields
+    if (!formData.title) {
+      toast.error('Будь ласка, введіть назву туру')
+      return
+    }
+
+    if (formData.images.length === 0 || !formData.images[0].trim()) {
+      toast.error('Будь ласка, додайте принаймні одне зображення')
+      return
+    }
+
     try {
       const cleanedData = {
         ...formData,
-        images: formData.images.filter(i => i.trim()),
-        highlights: formData.highlights.filter(h => h.trim()),
-        included: formData.included.filter(i => i.trim()),
-        notIncluded: formData.notIncluded.filter(i => i.trim())
+        title: formData.title && formData.title.trim()
+          ? formData.title
+          : formData.city || '',
+        city: formData.city || '',
+        country: formData.country || '',
+        price: Number(formData.price) || 0,
+        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+        maxParticipants: Number(formData.maxParticipants) || 1,
+        availableSpots: Number(formData.availableSpots) || 1,
+        images: formData.images.filter(i => i && i.trim()),
+        highlights: formData.highlights.filter(h => h && h.trim()),
+        included: formData.included.filter(i => i && i.trim()),
+        notIncluded: formData.notIncluded.filter(i => i && i.trim())
       }
+
+      // Remove empty fields that might cause validation issues
+      if (!cleanedData.destination) delete cleanedData.destination
+      if (!cleanedData.country) delete cleanedData.country
+      if (!cleanedData.city) delete cleanedData.city
 
       if (editingTour) {
         await api.put(`/tours/${editingTour._id}`, cleanedData)
@@ -67,7 +111,7 @@ export default function AdminTours() {
         await api.post('/tours', cleanedData)
         toast.success('Тур створено')
       }
-      
+
       setShowForm(false)
       setEditingTour(null)
       resetForm()
@@ -79,7 +123,7 @@ export default function AdminTours() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Видалити цей тур?')) return
-    
+
     try {
       await api.delete(`/tours/${id}`)
       toast.success('Тур видалено')
@@ -93,10 +137,13 @@ export default function AdminTours() {
     setEditingTour(tour)
     setFormData({
       destination: tour.destination._id,
+      country: tour.country || '',
+      city: tour.city || '',
       title: tour.title,
       description: tour.description,
       shortDescription: tour.shortDescription,
       price: tour.price,
+      originalPrice: tour.originalPrice || '',
       duration: tour.duration,
       startDate: format(new Date(tour.startDate), 'yyyy-MM-dd'),
       endDate: format(new Date(tour.endDate), 'yyyy-MM-dd'),
@@ -107,7 +154,10 @@ export default function AdminTours() {
       included: tour.included.length ? tour.included : [''],
       notIncluded: tour.notIncluded.length ? tour.notIncluded : [''],
       featured: tour.featured,
-      status: tour.status
+      status: tour.status,
+      tourType: tour.tourType || 'exclusive',
+      contactTelegram: tour.contactTelegram || '',
+      contactInstagram: tour.contactInstagram || ''
     })
     setShowForm(true)
   }
@@ -115,10 +165,13 @@ export default function AdminTours() {
   const resetForm = () => {
     setFormData({
       destination: '',
+      country: '',
+      city: '',
       title: '',
       description: '',
       shortDescription: '',
       price: '',
+      originalPrice: '',
       duration: '',
       startDate: '',
       endDate: '',
@@ -129,7 +182,10 @@ export default function AdminTours() {
       included: [''],
       notIncluded: [''],
       featured: false,
-      status: 'active'
+      status: 'active',
+      tourType: 'exclusive',
+      contactTelegram: '',
+      contactInstagram: ''
     })
   }
 
@@ -148,16 +204,56 @@ export default function AdminTours() {
     setFormData({ ...formData, [field]: newArray })
   }
 
+  const handleFileUpload = async (file, index) => {
+    if (!file) return
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      const url = res?.data?.path || res?.data?.url
+      if (url) {
+        const newImages = [...formData.images]
+        newImages[index] = url
+        setFormData({ ...formData, images: newImages })
+        toast.success('Зображення завантажено')
+      } else {
+        toast.error('Не вдалося отримати URL зображення')
+      }
+    } catch (e) {
+      console.error('Error uploading image:', e)
+      toast.error('Помилка завантаження зображення')
+    }
+  }
+
+  // Filter tours based on search query
+  const filteredTours = tours.filter(tour => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      tour.title?.toLowerCase().includes(query) ||
+      tour.city?.toLowerCase().includes(query) ||
+      tour.country?.toLowerCase().includes(query) ||
+      tour.price?.toString().includes(query)
+    )
+  })
+
   return (
     <div className="min-h-screen bg-luxury-dark">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Manage Tours - Admin Panel</title>
+      </Helmet>
+
       <div className="bg-luxury-dark-card shadow-xl border-b border-luxury-gold/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <Link to="/admin" className="text-luxury-gold hover:text-luxury-gold-light mb-2 inline-flex items-center">
+              <Link to="/mng-x7k9p2-secure" className="text-luxury-gold hover:text-luxury-gold-light mb-2 inline-flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Назад
               </Link>
-              <h1 className="text-3xl font-bold text-luxury-gold">Керування турами</h1>
+              <h1 className="text-3xl font-bold text-luxury-gold">Авторські подорожі</h1>
             </div>
             <button
               onClick={() => {
@@ -175,6 +271,22 @@ export default function AdminTours() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Bar */}
+        {!showForm && (
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Пошук за назвою, містом, країною або ціною..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-luxury-dark-card border border-luxury-gold/30 text-white rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-transparent placeholder-gray-500"
+              />
+            </div>
+          </div>
+        )}
+
         {showForm && (
           <div className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 p-6 mb-8">
             <h2 className="text-2xl font-bold mb-6 text-luxury-gold">
@@ -183,27 +295,23 @@ export default function AdminTours() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Напрямок *</label>
-                  <select
-                    required
-                    value={formData.destination}
-                    onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Країна</label>
+                  <input
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                    placeholder="Греція"
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  >
-                    <option value="">Оберіть напрямок</option>
-                    {destinations.map(dest => (
-                      <option key={dest._id} value={dest._id}>{dest.nameUk}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Місто</label>
                   <input
                     type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    value={formData.city}
+                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="Афіни"
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
                 </div>
@@ -217,6 +325,18 @@ export default function AdminTours() {
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Стара ціна (EUR) - опціонально</label>
+                  <input
+                    type="number"
+                    value={formData.originalPrice}
+                    onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                    placeholder="Для відображення знижки"
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Якщо вказано, буде показано перекреслену стару ціну</p>
                 </div>
 
                 <div>
@@ -276,6 +396,18 @@ export default function AdminTours() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Тип авіатур *</label>
+                  <select
+                    value={formData.tourType}
+                    onChange={(e) => setFormData({ ...formData, tourType: e.target.value })}
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                  >
+                    <option value="exclusive">Ексклюзивний авіатур</option>
+                    <option value="package">Авіатур (стандартний)</option>
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Статус *</label>
                   <select
                     value={formData.status}
@@ -321,26 +453,80 @@ export default function AdminTours() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Зображення (URLs)</label>
-                {formData.images.map((img, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
+              {formData.tourType === 'package' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-luxury-dark-lighter rounded-lg border border-luxury-gold/20">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Telegram (для пакетних турів)</label>
                     <input
-                      type="url"
-                      value={img}
-                      onChange={(e) => updateArrayField('images', index, e.target.value)}
-                      className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
-                      placeholder="https://..."
+                      type="text"
+                      placeholder="@username або t.me/username"
+                      value={formData.contactTelegram}
+                      onChange={(e) => setFormData({ ...formData, contactTelegram: e.target.value })}
+                      className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
                     />
-                    {formData.images.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayField('images', index)}
-                        className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Instagram (для пакетних турів)</label>
+                    <input
+                      type="text"
+                      placeholder="@username або instagram.com/username"
+                      value={formData.contactInstagram}
+                      onChange={(e) => setFormData({ ...formData, contactInstagram: e.target.value })}
+                      className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300">Зображення</label>
+                {formData.images.map((img, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        required={index === 0}
+                        value={img}
+                        onChange={(e) => updateArrayField('images', index, e.target.value.trim())}
+                        placeholder="https://... або /uploads/xxxxx.jpg"
+                        className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                      />
+                      <div className="flex gap-2">
+                        <label className="flex-1 cursor-pointer bg-luxury-gold/20 hover:bg-luxury-gold/30 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          Обрати файл
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e.target.files?.[0], index)}
+                          />
+                        </label>
+                        {formData.images.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeArrayField('images', index)}
+                            className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {img && (
+                      <div className="mt-1">
+                        <img
+                          src={img}
+                          alt={`Preview ${index + 1}`}
+                          className="h-32 w-full object-cover rounded-lg border border-luxury-gold/20"
+                          onError={(e) => {
+                            e.target.onerror = null
+                            e.target.src = ''
+                          }}
+                        />
+                      </div>
                     )}
+                    <p className="text-xs text-gray-500">Можна вставити URL або завантажити файл (jpeg/png/webp, до 8MB)</p>
                   </div>
                 ))}
                 <button
@@ -484,14 +670,28 @@ export default function AdminTours() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-luxury-gold/10">
-                {tours.map((tour) => (
+                {filteredTours.map((tour) => (
                   <tr key={tour._id} className="hover:bg-luxury-dark-lighter transition">
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-100">{tour.title}</div>
                     </td>
                     <td className="px-6 py-4 text-gray-300">
-                      <span className="text-2xl mr-2">{tour.destination?.flag}</span>
-                      {tour.destination?.nameUk}
+                      {tour.country ? (
+                        <div className="flex items-start gap-2">
+                          <span className="text-2xl">
+                            {countriesData.find(c => c.nameUk === tour.country)?.flag || '🌍'}
+                          </span>
+                          <div>
+                            <div className="font-medium">{tour.country}</div>
+                            {tour.city && <div className="text-sm text-gray-400">{tour.city}</div>}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-2xl mr-2">{tour.destination?.flag}</span>
+                          {tour.destination?.nameUk}
+                        </>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-luxury-gold font-semibold">€{tour.price}</td>
                     <td className="px-6 py-4 text-sm text-gray-300">
@@ -501,13 +701,12 @@ export default function AdminTours() {
                       {tour.availableSpots}/{tour.maxParticipants}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
+                      <span className={`px-2 py-1 text-xs rounded-full ${tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
                         tour.status === 'completed' ? 'bg-gray-700 text-gray-300 border border-gray-600' :
-                        'bg-red-900/50 text-red-300 border border-red-700'
-                      }`}>
-                        {tour.status === 'active' ? 'Активний' : 
-                         tour.status === 'completed' ? 'Завершений' : 'Скасований'}
+                          'bg-red-900/50 text-red-300 border border-red-700'
+                        }`}>
+                        {tour.status === 'active' ? 'Активний' :
+                          tour.status === 'completed' ? 'Завершений' : 'Скасований'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

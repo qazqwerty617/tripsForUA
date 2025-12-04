@@ -10,11 +10,11 @@ router.get('/', async (req, res) => {
   try {
     const { destination, status, featured, dateFrom, dateTo } = req.query;
     const query = {};
-    
+
     if (destination) query.destination = destination;
     if (status) query.status = status;
     if (featured) query.featured = featured === 'true';
-    
+
     // Date range filter: filter by startDate within [dateFrom, dateTo]
     if (dateFrom || dateTo) {
       query.startDate = {}
@@ -22,10 +22,18 @@ router.get('/', async (req, res) => {
       if (dateTo) query.startDate.$lte = new Date(dateTo)
     }
 
+    console.log('🔍 Tours query params:', { dateFrom, dateTo });
+    console.log('📝 MongoDB query:', JSON.stringify(query, null, 2));
+
     const tours = await Tour.find(query)
       .populate('destination')
       .sort({ startDate: 1 });
-    
+
+    console.log('✅ Found tours:', tours.length, tours.map(t => ({
+      title: t.title,
+      startDate: t.startDate
+    })));
+
     res.json(tours);
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
@@ -38,11 +46,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const tour = await Tour.findById(req.params.id).populate('destination');
-    
+
     if (!tour) {
       return res.status(404).json({ message: 'Тур не знайдено' });
     }
-    
+
     res.json(tour);
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
@@ -72,11 +80,11 @@ router.put('/:id', protect, admin, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).populate('destination');
-    
+
     if (!tour) {
       return res.status(404).json({ message: 'Тур не знайдено' });
     }
-    
+
     res.json(tour);
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
@@ -89,11 +97,11 @@ router.put('/:id', protect, admin, async (req, res) => {
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const tour = await Tour.findByIdAndDelete(req.params.id);
-    
+
     if (!tour) {
       return res.status(404).json({ message: 'Тур не знайдено' });
     }
-    
+
     res.json({ message: 'Тур видалено' });
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });

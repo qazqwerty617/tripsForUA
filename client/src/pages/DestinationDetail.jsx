@@ -48,6 +48,7 @@ export default function DestinationDetail() {
       {/* Hero */}
       <div className="relative h-[500px]">
         <img
+          loading="lazy" decoding="async"
           src={destination.image}
           alt={destination.nameUk}
           className="w-full h-full object-cover"
@@ -84,6 +85,7 @@ export default function DestinationDetail() {
               {destination.gallery.map((image, index) => (
                 <div key={index} className="aspect-[4/3] rounded-xl overflow-hidden">
                   <img
+                    loading="lazy" decoding="async"
                     src={image}
                     alt={`${destination.nameUk} ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition duration-300"
@@ -118,6 +120,7 @@ export default function DestinationDetail() {
                 >
                   <div className="aspect-[16/10] overflow-hidden">
                     <img
+                      loading="lazy" decoding="async"
                       src={tour.images[0]}
                       alt={tour.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"

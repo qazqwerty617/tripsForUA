@@ -54,7 +54,7 @@ export default function AdminDestinations() {
         await api.post('/destinations', cleanedData)
         toast.success('Напрямок створено')
       }
-      
+
       setShowForm(false)
       setEditingDestination(null)
       resetForm()
@@ -66,7 +66,7 @@ export default function AdminDestinations() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Видалити цей напрямок?')) return
-    
+
     try {
       await api.delete(`/destinations/${id}`)
       toast.success('Напрямок видалено')
@@ -133,7 +133,7 @@ export default function AdminDestinations() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <Link to="/admin" className="text-primary-600 hover:text-primary-700 mb-2 inline-flex items-center">
+              <Link to="/mng-x7k9p2-secure" className="text-primary-600 hover:text-primary-700 mb-2 inline-flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Назад
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">Керування напрямками</h1>
@@ -372,15 +372,14 @@ export default function AdminDestinations() {
                     {destination.shortDescription}
                   </p>
                   <div className="flex items-center justify-between mb-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      destination.featured ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${destination.featured ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {destination.featured ? 'Рекомендований' : 'Звичайний'}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {destination.continent === 'Europe' ? 'Європа' : 
-                       destination.continent === 'Africa' ? 'Африка' : 
-                       destination.continent === 'Asia' ? 'Азія' : destination.continent}
+                      {destination.continent === 'Europe' ? 'Європа' :
+                        destination.continent === 'Africa' ? 'Африка' :
+                          destination.continent === 'Asia' ? 'Азія' : destination.continent}
                     </span>
                   </div>
                   <div className="flex gap-2">

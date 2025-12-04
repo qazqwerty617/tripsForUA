@@ -41,6 +41,7 @@ export default function DestinationModal({ destination, isOpen, onClose }) {
         {/* Image Gallery */}
         <div className="relative h-[400px] md:h-[500px] bg-black">
           <img
+            loading="lazy" decoding="async"
             src={images[currentImage]}
             alt={destination.nameUk}
             className="w-full h-full object-cover"
@@ -134,6 +135,7 @@ export default function DestinationModal({ destination, isOpen, onClose }) {
                     }`}
                   >
                     <img
+                      loading="lazy" decoding="async"
                       src={img}
                       alt={`${destination.nameUk} ${idx + 1}`}
                       className="w-full h-full object-cover"

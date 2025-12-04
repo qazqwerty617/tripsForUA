@@ -1,0 +1,16 @@
+# robots.txt - Інструкції для пошукових роботів
+
+# Дозволити індексацію всього сайту
+User-agent: *
+Allow: /
+
+# ЗАБОРОНИТИ індексацію адмін-панелі (ВАЖЛИВО для безпеки!)
+Disallow: /admin
+Disallow: /api/auth
+Disallow: /api/upload
+
+# Не індексувати uploads (якщо потрібно)
+# Disallow: /uploads
+
+# Sitemap (додайте після створення)
+# Sitemap: https://your-domain.com/sitemap.xml

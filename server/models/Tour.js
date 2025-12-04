@@ -4,7 +4,15 @@ const tourSchema = new mongoose.Schema({
   destination: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Destination',
-    required: true
+    required: false
+  },
+  country: {
+    type: String,
+    trim: true
+  },
+  city: {
+    type: String,
+    trim: true
   },
   title: {
     type: String,
@@ -22,6 +30,10 @@ const tourSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true
+  },
+  originalPrice: {
+    type: Number,
+    required: false
   },
   duration: {
     type: String,
@@ -69,6 +81,19 @@ const tourSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'completed', 'cancelled'],
     default: 'active'
+  },
+  tourType: {
+    type: String,
+    enum: ['exclusive', 'package'],
+    default: 'exclusive'
+  },
+  contactTelegram: {
+    type: String,
+    default: ''
+  },
+  contactInstagram: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true
