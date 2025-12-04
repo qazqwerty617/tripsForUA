@@ -6,20 +6,8 @@ export default function Footer() {
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <Plane className="h-8 w-8 text-primary-400" />
-              <span className="text-2xl font-bold">TripsForUA</span>
-            </div>
-            <p className="text-gray-400 mb-4">
-              Авторські тури по найкрасивішим місцям світу.
-              Створюємо незабутні подорожі з 2020 року.
-            </p>
-          </div>
-
           {/* Quick Links */}
-          <div>
+          <div className="order-1 md:order-2">
             <h3 className="text-lg font-semibold mb-4">Швидкі посилання</h3>
             <ul className="space-y-2">
               <li>
@@ -46,7 +34,7 @@ export default function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="order-2 md:order-3">
             <h3 className="text-lg font-semibold mb-4">Контакти</h3>
             <ul className="space-y-3">
               <li className="flex items-center space-x-2">
@@ -60,6 +48,17 @@ export default function Footer() {
                 <a href="https://www.instagram.com/trips_for_ukr/?igsh=dnNucTM2cnd1cmgx" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-400 transition">Instagram</a>
               </li>
             </ul>
+          </div>
+
+          {/* Company Info - Last on mobile, First on desktop */}
+          <div className="col-span-1 md:col-span-2 order-3 md:order-1">
+            <div className="flex items-center space-x-2 mb-4">
+              <Plane className="h-8 w-8 text-primary-400" />
+              <span className="text-2xl font-bold">TripsForUA</span>
+            </div>
+            <p className="text-gray-400 mb-4">
+              Це унікальний проєкт від нашої команди, де зібрані авторські подорожі більшості провідних туроператорів України в одному місці. Програми додаються та оновлюються.
+            </p>
           </div>
         </div>
 

@@ -235,7 +235,7 @@ export default function Home() {
               TRIPS<br />FOR UKRAINE
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-gray-300 max-w-2xl animate-slide-up">
-              Створюємо незабутні враження та допомагаємо відкривати нові горизонти
+              Унікальний проєкт від нашої команди з добірками ексклюзивних турів та авторських подорожей від провідних туроператорів України в одному місці. Зручно, швидко та вигідно.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -249,7 +249,7 @@ export default function Home() {
                 href="#contact"
                 className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 backdrop-blur-sm transition inline-flex items-center justify-center animate-scale-in"
               >
-                Зв'язатися з нами
+                Зв'язок з нами
               </a>
             </div>
           </div>
