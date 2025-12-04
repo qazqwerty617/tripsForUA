@@ -234,7 +234,7 @@ export default function Home() {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance text-luxury-gold animate-fade-in" style={{ letterSpacing: '0.02em' }}>
               TRIPS<br />FOR UKRAINE
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-gray-300 max-w-2xl animate-slide-up">
+            <p className="text-base md:text-xl mb-8 text-gray-300 max-w-2xl animate-slide-up">
               Унікальний проєкт від нашої команди з добірками ексклюзивних турів та авторських подорожей від провідних туроператорів України в одному місці. Зручно, швидко та вигідно.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">

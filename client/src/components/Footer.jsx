@@ -54,7 +54,7 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-2 order-3 md:order-1">
             <div className="flex items-center space-x-2 mb-4">
               <Plane className="h-8 w-8 text-primary-400" />
-              <span className="text-2xl font-bold">TripsForUA</span>
+              <span className="text-2xl font-bold">Trips for Ukraine</span>
             </div>
             <p className="text-gray-400 mb-4">
               Це унікальний проєкт від нашої команди, де зібрані авторські подорожі більшості провідних туроператорів України в одному місці. Програми додаються та оновлюються.
