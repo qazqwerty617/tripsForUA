@@ -47,9 +47,9 @@ export default function Navbar() {
             <Link to="/" className="text-gray-300 hover:text-luxury-gold transition font-medium">
               Головна
             </Link>
-            <Link to="/destinations" className="text-gray-300 hover:text-luxury-gold transition font-medium">
+            <a href="/#tours" className="text-gray-300 hover:text-luxury-gold transition font-medium">
               Напрямки
-            </Link>
+            </a>
             <a href="/#tours" className="text-gray-300 hover:text-luxury-gold transition font-medium">
               Календар
             </a>
@@ -87,13 +87,13 @@ export default function Navbar() {
             >
               Головна
             </Link>
-            <Link
-              to="/destinations"
+            <a
+              href="/#tours"
               className="block px-3 py-2 text-gray-300 hover:bg-luxury-gold/10 hover:text-luxury-gold rounded"
               onClick={() => setIsOpen(false)}
             >
               Напрямки
-            </Link>
+            </a>
             <a
               href="/#tours"
               className="block px-3 py-2 text-gray-300 hover:bg-luxury-gold/10 hover:text-luxury-gold rounded"
