@@ -8,15 +8,15 @@ export default function Navbar() {
   return (
     <nav className="bg-luxury-dark border-b border-luxury-gold/20 shadow-xl sticky top-0 z-50 backdrop-blur-md bg-luxury-dark/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-16 md:h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <Plane className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-luxury-gold hover:text-luxury-gold-light transition" style={{ letterSpacing: '0.05em' }}>
+              <Plane className="h-6 w-6 md:h-8 md:w-8 text-primary-600" />
+              <span className="text-base md:text-2xl font-bold text-luxury-gold hover:text-luxury-gold-light transition" style={{ letterSpacing: '0.05em' }}>
                 TRIPS FOR UKRAINE
               </span>
             </Link>
-            <div className="flex items-center gap-3 ml-4">
+            <div className="hidden md:flex items-center gap-3 ml-4">
               <a
                 href="https://t.me/trips_for_ukr"
                 target="_blank"
