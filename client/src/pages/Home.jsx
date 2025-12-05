@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Calendar, MapPin, Users, Star, ArrowRight, Check, X } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
@@ -7,6 +7,12 @@ import { uk } from 'date-fns/locale'
 
 
 export default function Home() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Refs for auto-focus
+  const toursDateToRef = useRef(null)
+  const aviaturyDateToRef = useRef(null)
+
   const [tours, setTours] = useState([])
   const [aviatury, setAviatury] = useState([])
   const [allTours, setAllTours] = useState([]) // Оригінальний список для max дат
@@ -14,12 +20,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [selectedAviatur, setSelectedAviatur] = useState(null)
   const [showAviaturModal, setShowAviaturModal] = useState(false)
-  const [showAllAviatury, setShowAllAviatury] = useState(false)
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [toursDateFrom, setToursDateFrom] = useState('')
-  const [toursDateTo, setToursDateTo] = useState('')
-  const [showAllTours, setShowAllTours] = useState(false)
+  const [showAllAviatury, setShowAllAviatury] = useState(() => searchParams.get('showAllAviatury') === 'true')
+  const [dateFrom, setDateFrom] = useState(() => searchParams.get('aviaturyFrom') || '')
+  const [dateTo, setDateTo] = useState(() => searchParams.get('aviaturyTo') || '')
+  const [toursDateFrom, setToursDateFrom] = useState(() => searchParams.get('toursFrom') || '')
+  const [toursDateTo, setToursDateTo] = useState(() => searchParams.get('toursTo') || '')
+  const [showAllTours, setShowAllTours] = useState(() => searchParams.get('showAllTours') === 'true')
 
   // Лічильники для показу результатів в реальному часі
   const [filteredToursCount, setFilteredToursCount] = useState(0)
@@ -67,23 +73,26 @@ export default function Home() {
     const todayDate = new Date(today)
     todayDate.setHours(0, 0, 0, 0)
 
-    const futureTours = allTours.filter(t => {
-      if (!t.startDate) return false
-      const startDate = new Date(t.startDate)
-      startDate.setHours(0, 0, 0, 0)
-      return startDate >= todayDate
+    // Collect all dates from tours (availableDates or startDate)
+    const allDates = []
+    allTours.forEach(t => {
+      if (t.availableDates && t.availableDates.length > 0) {
+        t.availableDates.forEach(d => {
+          const date = new Date(d)
+          date.setHours(0, 0, 0, 0)
+          if (date >= todayDate) allDates.push(date)
+        })
+      } else if (t.startDate) {
+        const date = new Date(t.startDate)
+        date.setHours(0, 0, 0, 0)
+        if (date >= todayDate) allDates.push(date)
+      }
     })
 
-    if (futureTours.length === 0) return { minTourDate: '', maxTourDate: '' }
+    if (allDates.length === 0) return { minTourDate: '', maxTourDate: '' }
 
-    const dates = futureTours
-      .map(t => t.startDate ? new Date(t.startDate) : null)
-      .filter(d => d !== null)
-
-    if (dates.length === 0) return { minTourDate: '', maxTourDate: '' }
-
-    const minDate = new Date(Math.min(...dates)).toISOString().split('T')[0]
-    const maxDate = new Date(Math.max(...dates)).toISOString().split('T')[0]
+    const minDate = new Date(Math.min(...allDates)).toISOString().split('T')[0]
+    const maxDate = new Date(Math.max(...allDates)).toISOString().split('T')[0]
 
     return { minTourDate: minDate, maxTourDate: maxDate }
   }, [allTours, today])
@@ -91,54 +100,72 @@ export default function Home() {
 
 
   // Підрахувати результати фільтрації на клієнті (без API запиту)
-  const countFilteredResults = (items, dateFrom, dateTo) => {
+  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
     if (!dateFrom && !dateTo) return items.length
 
     return items.filter(item => {
-      const itemDate = new Date(item.startDate || item.availableFrom)
-      itemDate.setHours(0, 0, 0, 0)
-
-      if (dateFrom && dateTo) {
-        const from = new Date(dateFrom)
-        const to = new Date(dateTo)
-        from.setHours(0, 0, 0, 0)
-        to.setHours(0, 0, 0, 0)
-        return itemDate >= from && itemDate <= to
+      // For tours: check availableDates if present, else startDate
+      // For aviatury: check availableFrom
+      let datesToCheck;
+      if (isTour) {
+        datesToCheck = item.availableDates && item.availableDates.length > 0
+          ? item.availableDates.map(d => new Date(d))
+          : [new Date(item.startDate)];
+      } else {
+        datesToCheck = [new Date(item.availableFrom)];
       }
 
-      if (dateFrom) {
-        const from = new Date(dateFrom)
-        from.setHours(0, 0, 0, 0)
-        return itemDate >= from
-      }
+      // Check if any date falls within the range
+      return datesToCheck.some(itemDate => {
+        itemDate.setHours(0, 0, 0, 0);
 
-      if (dateTo) {
-        const to = new Date(dateTo)
-        to.setHours(0, 0, 0, 0)
-        return itemDate <= to
-      }
+        if (dateFrom && dateTo) {
+          const from = new Date(dateFrom);
+          const to = new Date(dateTo);
+          from.setHours(0, 0, 0, 0);
+          to.setHours(0, 0, 0, 0);
+          return itemDate >= from && itemDate <= to;
+        }
 
-      return true
+        if (dateFrom) {
+          const from = new Date(dateFrom);
+          from.setHours(0, 0, 0, 0);
+          return itemDate >= from;
+        }
+
+        if (dateTo) {
+          const to = new Date(dateTo);
+          to.setHours(0, 0, 0, 0);
+          return itemDate <= to;
+        }
+
+        return true;
+      });
     }).length
   }
-
 
 
   useEffect(() => {
     // Завантажити дані при монтуванні компонента
     fetchData()
 
-    // Автоматично оновлювати дані кожні 30 секунд
-    // Це потрібно щоб фільтри синхронізувались зі змінами в адмін-панелі
+    // Автоматично оновлювати дані кожні 2 хвилини
+    // Пропускає оновлення якщо є активний фільтр
     const interval = setInterval(() => {
-      fetchData()
-    }, 30000) // 30 секунд
+      // Не оновлюємо якщо є активний фільтр
+      if (!showAllTours && !toursDateFrom && !toursDateTo && !showAllAviatury && !dateFrom && !dateTo) {
+        fetchData()
+      }
+    }, 120000) // 2 хвилини
 
     // Оновити дані коли користувач повертається на сторінку
     // (наприклад, після зміни туру в адмін-панелі)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchData()
+        // Не оновлюємо якщо є активний фільтр
+        if (!showAllTours && !toursDateFrom && !toursDateTo && !showAllAviatury && !dateFrom && !dateTo) {
+          fetchData()
+        }
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -148,9 +175,9 @@ export default function Home() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [showAllTours, toursDateFrom, toursDateTo, showAllAviatury, dateFrom, dateTo])
 
-  const fetchData = async () => {
+  const fetchData = async (resetFilters = false) => {
     try {
       const [toursRes, aviaturyRes] = await Promise.all([
         api.get('/tours?status=active'),
@@ -160,14 +187,83 @@ export default function Home() {
       const allToursData = toursRes.data
       const allAviaturyData = aviaturyRes.data
 
-      // Зберігаємо оригінальні дані для max дат
+      // Зберігаємо оригінальні дані для max дат та підрахунку
       setAllTours(allToursData)
       setAllAviatury(allAviaturyData)
 
-      // Показуємо перші 6 турів
-      setTours(allToursData.slice(0, 6))
-      setAviatury(allAviaturyData)
+      // Оновлюємо показані дані тільки якщо немає активного фільтра
+      // або якщо це перше завантаження / скидання фільтрів
+      if (resetFilters) {
+        setTours(allToursData.slice(0, 6))
+        setAviatury(allAviaturyData)
+      } else {
+        // Якщо є активні фільтри для турів - застосовуємо їх
+        if (showAllTours || toursDateFrom || toursDateTo) {
+          // Тут краще викликати API, але оскільки ми вже маємо всі дані,
+          // можемо відфільтрувати їх локально щоб уникнути зайвого запиту
+          // Використовуємо ту ж логіку що і countFilteredResults
+          const filteredTours = allToursData.filter(item => {
+            const datesToCheck = item.availableDates && item.availableDates.length > 0
+              ? item.availableDates.map(d => new Date(d))
+              : [new Date(item.startDate)];
 
+            return datesToCheck.some(itemDate => {
+              itemDate.setHours(0, 0, 0, 0);
+              if (toursDateFrom && toursDateTo) {
+                const from = new Date(toursDateFrom);
+                const to = new Date(toursDateTo);
+                from.setHours(0, 0, 0, 0);
+                to.setHours(0, 0, 0, 0);
+                return itemDate >= from && itemDate <= to;
+              }
+              if (toursDateFrom) {
+                const from = new Date(toursDateFrom);
+                from.setHours(0, 0, 0, 0);
+                return itemDate >= from;
+              }
+              if (toursDateTo) {
+                const to = new Date(toursDateTo);
+                to.setHours(0, 0, 0, 0);
+                return itemDate <= to;
+              }
+              return true;
+            });
+          });
+          setTours(filteredTours);
+        } else {
+          setTours(allToursData.slice(0, 6))
+        }
+
+        // Якщо є активні фільтри для авіатурів - застосовуємо їх
+        if (showAllAviatury || dateFrom || dateTo) {
+          const filteredAviatury = allAviaturyData.filter(item => {
+            const itemDate = new Date(item.availableFrom);
+            itemDate.setHours(0, 0, 0, 0);
+
+            if (dateFrom && dateTo) {
+              const from = new Date(dateFrom);
+              const to = new Date(dateTo);
+              from.setHours(0, 0, 0, 0);
+              to.setHours(0, 0, 0, 0);
+              return itemDate >= from && itemDate <= to;
+            }
+            if (dateFrom) {
+              const from = new Date(dateFrom);
+              from.setHours(0, 0, 0, 0);
+              return itemDate >= from;
+            }
+            if (dateTo) {
+              const to = new Date(dateTo);
+              to.setHours(0, 0, 0, 0);
+              return itemDate <= to;
+            }
+            return true;
+          });
+          setAviatury(filteredAviatury);
+        } else {
+          setAviatury(allAviaturyData)
+        }
+      }
 
       setLoading(false)
     } catch (error) {
@@ -178,23 +274,59 @@ export default function Home() {
 
   // Автоматично підраховувати результати для турів в реальному часі
   useEffect(() => {
-    const count = countFilteredResults(allTours, toursDateFrom, toursDateTo)
+    const count = countFilteredResults(allTours, toursDateFrom, toursDateTo, true)
     setFilteredToursCount(count)
   }, [allTours, toursDateFrom, toursDateTo])
 
   // Автоматично підраховувати результати для авіатурів в реальному часі
   useEffect(() => {
-    const count = countFilteredResults(allAviatury, dateFrom, dateTo)
+    const count = countFilteredResults(allAviatury, dateFrom, dateTo, false)
     setFilteredAviaturyCount(count)
   }, [allAviatury, dateFrom, dateTo])
 
-  const applyAviaturyFilter = async () => {
+  // Зберігати фільтри в URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (toursDateFrom) params.set('toursFrom', toursDateFrom)
+    if (toursDateTo) params.set('toursTo', toursDateTo)
+    if (showAllTours) params.set('showAllTours', 'true')
+    if (dateFrom) params.set('aviaturyFrom', dateFrom)
+    if (dateTo) params.set('aviaturyTo', dateTo)
+    if (showAllAviatury) params.set('showAllAviatury', 'true')
+
+    setSearchParams(params, { replace: true })
+  }, [toursDateFrom, toursDateTo, showAllTours, dateFrom, dateTo, showAllAviatury, setSearchParams])
+
+  // Auto-apply filters when dates change
+  useEffect(() => {
+    if (toursDateFrom || toursDateTo) {
+      const timer = setTimeout(() => {
+        applyToursFilter()
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [toursDateFrom, toursDateTo])
+
+  useEffect(() => {
+    if (dateFrom || dateTo) {
+      const timer = setTimeout(() => {
+        applyAviaturyFilter()
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [dateFrom, dateTo])
+
+  const applyAviaturyFilter = async (overrideFrom, overrideTo) => {
     try {
       const params = new URLSearchParams()
       params.set('status', 'active')
-      if (dateFrom) params.set('from', dateFrom)
-      if (dateTo) params.set('to', dateTo)
-      const res = await api.get(`/aviatury?${params.toString()}`)
+
+      const from = overrideFrom !== undefined ? overrideFrom : dateFrom
+      const to = overrideTo !== undefined ? overrideTo : dateTo
+
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const res = await api.get(`/ aviatury ? ${params.toString()} `)
       setAviatury(res.data)
       setShowAllAviatury(true)
     } catch (error) {
@@ -202,13 +334,17 @@ export default function Home() {
     }
   }
 
-  const applyToursFilter = async () => {
+  const applyToursFilter = async (overrideFrom, overrideTo) => {
     try {
       const params = new URLSearchParams()
       params.set('status', 'active')
-      if (toursDateFrom) params.set('from', toursDateFrom)
-      if (toursDateTo) params.set('to', toursDateTo)
-      const res = await api.get(`/tours?${params.toString()}`)
+
+      const from = overrideFrom !== undefined ? overrideFrom : toursDateFrom
+      const to = overrideTo !== undefined ? overrideTo : toursDateTo
+
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const res = await api.get(`/ tours ? ${params.toString()} `)
       setTours(res.data)
       setShowAllTours(true)
     } catch (error) {
@@ -297,50 +433,36 @@ export default function Home() {
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
 
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">З дати</label>
-                <input
-                  type="date"
-                  value={toursDateFrom}
-                  onChange={(e) => {
-                    const newDateFrom = e.target.value
-                    setToursDateFrom(newDateFrom)
-
-                    if (newDateFrom && !toursDateTo) {
-                      const from = new Date(newDateFrom)
-                      const autoTo = new Date(from.getFullYear(), from.getMonth() + 1, 0)
-                      const autoToStr = autoTo.toISOString().split('T')[0]
-                      if (!maxTourDate || autoToStr <= maxTourDate) {
-                        setToursDateTo(autoToStr)
-                      } else if (maxTourDate) {
-                        setToursDateTo(maxTourDate)
-                      }
-                    }
-
-                    if (toursDateTo && newDateFrom > toursDateTo) {
-                      setToursDateTo('')
-                    }
-                  }}
-                  min={minTourDate || today}
-                  max={maxTourDate}
-                  className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="md:col-span-2 relative">
+                <label className="block text-sm text-gray-300 mb-2">Оберіть дату початку туру</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={toursDateFrom}
+                    onChange={(e) => {
+                      const newDateFrom = e.target.value
+                      setToursDateFrom(newDateFrom)
+                      setToursDateTo('') // Clear To Date to ensure open-ended filtering
+                    }}
+                    min={minTourDate || today}
+                    max={maxTourDate}
+                    lang="uk"
+                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
+                  />
+                  {toursDateFrom && (
+                    <button
+                      onClick={() => setToursDateFrom('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">До дати</label>
-                <input
-                  type="date"
-                  value={toursDateTo}
-                  onChange={(e) => setToursDateTo(e.target.value)}
-                  min={toursDateFrom || minTourDate || today}
-                  max={maxTourDate}
-                  className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                />
-              </div>
-              <div className="flex gap-3 md:col-span-2">
-                <button onClick={applyToursFilter} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-2 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); fetchData(); setShowAllTours(false); }} className="px-4 py-2 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
+              <div className="flex gap-3">
+                <button onClick={() => applyToursFilter()} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
+                <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); fetchData(true); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
             </div>
 
@@ -353,7 +475,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {(showAllTours ? tours : tours.slice(0, 6)).map((tour, index) => (
-              <Link key={tour._id} to={`/tours/${tour._id}`} className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group hover-lift animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+              <Link key={tour._id} to={`/tours/${tour._id}`} className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group hover-lift">
                 <div className="relative h-64">
                   <img
                     src={tour.images[0]}
@@ -368,9 +490,9 @@ export default function Home() {
                 <div className="p-6">
                   <div className="flex items-center mb-2">
                     <MapPin className="h-4 w-4 text-luxury-gold mr-1" />
-                    <span className="text-gray-400 text-sm">{tour.destination?.name}</span>
+                    <span className="text-gray-400 text-sm">{tour.fancyTitle ? tour.title : tour.destination?.name}</span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-white group-hover:text-luxury-gold transition">{tour.title}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-white group-hover:text-luxury-gold transition">{tour.fancyTitle || tour.title}</h3>
                   <p className="text-gray-400 mb-4 line-clamp-2">{tour.description}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -420,15 +542,23 @@ export default function Home() {
                     const newDateFrom = e.target.value
                     setDateFrom(newDateFrom)
 
+                    let newDateTo = dateTo
+
                     if (newDateFrom && !dateTo) {
                       const from = new Date(newDateFrom)
                       const autoTo = new Date(from.getFullYear(), from.getMonth() + 1, 0)
                       const autoToStr = autoTo.toISOString().split('T')[0]
                       if (!maxAviaturDate || autoToStr <= maxAviaturDate) {
                         setDateTo(autoToStr)
+                        newDateTo = autoToStr
                       } else if (maxAviaturDate) {
                         setDateTo(maxAviaturDate)
+                        newDateTo = maxAviaturDate
                       }
+                    }
+
+                    if (dateTo && newDateFrom > dateTo) {
+                      setDateTo('')
                     }
 
                     if (dateTo && newDateFrom > dateTo) {
@@ -437,23 +567,28 @@ export default function Home() {
                   }}
                   min={minAviaturDate || today}
                   max={maxAviaturDate}
+                  lang="uk"
                   className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-2">До дати</label>
                 <input
+                  ref={aviaturyDateToRef}
                   type="date"
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
+                  onChange={(e) => {
+                    setDateTo(e.target.value)
+                  }}
                   min={dateFrom || minAviaturDate || today}
                   max={maxAviaturDate}
+                  lang="uk"
                   className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                 />
               </div>
               <div className="flex gap-3 md:col-span-2">
-                <button onClick={applyAviaturyFilter} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-2 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setDateFrom(''); setDateTo(''); fetchData(); setShowAllAviatury(false); }} className="px-4 py-2 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
+                <button onClick={applyAviaturyFilter} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
+                <button onClick={() => { setDateFrom(''); setDateTo(''); setShowAllAviatury(false); fetchData(true); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
             </div>
 
@@ -472,8 +607,7 @@ export default function Home() {
                   setSelectedAviatur(aviatur)
                   setShowAviaturModal(true)
                 }}
-                className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group text-left h-full flex flex-col hover-lift animate-scale-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group text-left h-full flex flex-col hover-lift"
               >
                 <div className="relative h-48">
                   <img

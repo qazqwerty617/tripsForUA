@@ -11,12 +11,14 @@ export default function TourDetail() {
   const [tour, setTour] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showBookingForm, setShowBookingForm] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(null)
   const [formData, setFormData] = useState({
     customerName: '',
     customerEmail: '',
     customerPhone: '',
     numberOfPeople: 1,
-    notes: ''
+    notes: '',
+    selectedDate: ''
   })
 
   useEffect(() => {
@@ -56,6 +58,16 @@ export default function TourDetail() {
     }
   }
 
+  const formatDate = (date, formatStr = 'd MMM') => {
+    if (!date) return ''
+    try {
+      return format(new Date(date), formatStr, { locale: uk })
+    } catch (e) {
+      console.error('Date formatting error:', e)
+      return ''
+    }
+  }
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Завантаження...</div>
   }
@@ -67,10 +79,10 @@ export default function TourDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <div className="relative h-[500px]">
+      <div className="relative h-[300px] md:h-[500px]">
         <img
           loading="lazy" decoding="async"
-          src={tour.images[0]}
+          src={tour.images?.[0]}
           alt={tour.title}
           className="w-full h-full object-cover"
         />
@@ -82,13 +94,18 @@ export default function TourDetail() {
               <span className="text-xl bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
                 {tour.destination?.nameUk}
               </span>
+              {tour.fancyTitle && (
+                <span className="text-xl bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
+                  {tour.title}
+                </span>
+              )}
             </div>
-            <h1 className="text-5xl font-bold mb-4">{tour.title}</h1>
+            <h1 className="text-5xl font-bold mb-4">{tour.fancyTitle || tour.title}</h1>
             <div className="flex flex-wrap gap-6 text-lg">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 <span>
-                  {format(new Date(tour.startDate), 'd MMM', { locale: uk })} - {format(new Date(tour.endDate), 'd MMM yyyy', { locale: uk })}
+                  {formatDate(tour.startDate)} - {formatDate(tour.endDate, 'd MMM yyyy')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -108,14 +125,6 @@ export default function TourDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            <div className="bg-white rounded-2xl p-8 shadow-md">
-              <h2 className="text-3xl font-bold mb-4 text-gray-900">Про подорож</h2>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                {tour.description}
-              </p>
-            </div>
-
             {/* Highlights */}
             {tour.highlights && tour.highlights.length > 0 && (
               <div className="bg-white rounded-2xl p-8 shadow-md">
@@ -132,6 +141,14 @@ export default function TourDetail() {
                 </div>
               </div>
             )}
+
+            {/* Description */}
+            <div className="bg-white rounded-2xl p-8 shadow-md">
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">Про подорож</h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {tour.description}
+              </p>
+            </div>
 
             {/* Included/Not Included */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,6 +244,11 @@ export default function TourDetail() {
           <div className="lg:col-span-1">
             <div className={`bg-white rounded-2xl p-6 shadow-xl ${showBookingForm ? '' : 'sticky top-24'}`}>
               <div className="text-center mb-6 pb-6 border-b">
+                {tour.originalPrice && tour.originalPrice > tour.price && (
+                  <div className="text-xl text-gray-400 line-through mb-1">
+                    €{tour.originalPrice}
+                  </div>
+                )}
                 <div className="text-4xl font-bold text-primary-600 mb-2">
                   €{tour.price}
                 </div>
@@ -234,15 +256,45 @@ export default function TourDetail() {
               </div>
 
               <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <span className="text-gray-800 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Початок
-                  </span>
-                  <span className="font-semibold text-gray-900">
-                    {format(new Date(tour.startDate), 'd MMM yyyy', { locale: uk })}
-                  </span>
-                </div>
+                {/* Date Selection */}
+                {tour.availableDates && tour.availableDates.length > 1 ? (
+                  <div className="py-3 border-b">
+                    <span className="text-gray-800 flex items-center gap-2 mb-3">
+                      <Calendar className="h-4 w-4" />
+                      Оберіть дату виїзду
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {tour.availableDates
+                        .sort((a, b) => new Date(a) - new Date(b))
+                        .map((date, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDate(date)
+                              setFormData(prev => ({ ...prev, selectedDate: date }))
+                            }}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${selectedDate === date
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                          >
+                            {formatDate(date)}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between py-3 border-b">
+                    <span className="text-gray-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Початок
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      {formatDate(tour.availableDates?.[0] || tour.startDate, 'd MMM yyyy')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between py-3 border-b">
                   <span className="text-gray-800 flex items-center gap-2">
                     <Clock className="h-4 w-4" />

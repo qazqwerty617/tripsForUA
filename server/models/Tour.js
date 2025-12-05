@@ -19,6 +19,11 @@ const tourSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  fancyTitle: {
+    type: String,
+    trim: true,
+    required: false
+  },
   description: {
     type: String,
     required: true
@@ -47,6 +52,9 @@ const tourSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  availableDates: [{
+    type: Date
+  }],
   maxParticipants: {
     type: Number,
     required: true,

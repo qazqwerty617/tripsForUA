@@ -8,30 +8,52 @@ const { protect, admin } = require('../middleware/auth');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { destination, status, featured, dateFrom, dateTo } = req.query;
+    const { destination, status, featured, from, to } = req.query;
     const query = {};
 
     if (destination) query.destination = destination;
     if (status) query.status = status;
     if (featured) query.featured = featured === 'true';
 
-    // Date range filter: filter by startDate within [dateFrom, dateTo]
-    if (dateFrom || dateTo) {
-      query.startDate = {}
-      if (dateFrom) query.startDate.$gte = new Date(dateFrom)
-      if (dateTo) query.startDate.$lte = new Date(dateTo)
-    }
+    console.log('🔍 Tours query params:', { from, to });
 
-    console.log('🔍 Tours query params:', { dateFrom, dateTo });
-    console.log('📝 MongoDB query:', JSON.stringify(query, null, 2));
-
-    const tours = await Tour.find(query)
+    let tours = await Tour.find(query)
       .populate('destination')
-      .sort({ startDate: 1 });
+      .sort({ featured: -1, startDate: 1 }); // Featured first, then by date
+
+    // Date range filter: check if any date in availableDates OR startDate is within range
+    if (from || to) {
+      const fromDate = from ? new Date(from) : null;
+      const toDate = to ? new Date(to) : null;
+
+      if (fromDate) fromDate.setHours(0, 0, 0, 0);
+      if (toDate) toDate.setHours(23, 59, 59, 999);
+
+      tours = tours.filter(tour => {
+        // Get all dates to check (availableDates if present, else just startDate)
+        const datesToCheck = tour.availableDates && tour.availableDates.length > 0
+          ? tour.availableDates
+          : [tour.startDate];
+
+        // Check if any date falls within the range
+        return datesToCheck.some(date => {
+          const d = new Date(date);
+          d.setHours(0, 0, 0, 0);
+
+          if (fromDate && toDate) {
+            return d >= fromDate && d <= toDate;
+          }
+          if (fromDate) return d >= fromDate;
+          if (toDate) return d <= toDate;
+          return true;
+        });
+      });
+    }
 
     console.log('✅ Found tours:', tours.length, tours.map(t => ({
       title: t.title,
-      startDate: t.startDate
+      startDate: t.startDate,
+      availableDates: t.availableDates
     })));
 
     res.json(tours);

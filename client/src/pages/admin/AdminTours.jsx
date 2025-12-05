@@ -27,6 +27,7 @@ export default function AdminTours() {
     duration: '',
     startDate: '',
     endDate: '',
+    availableDates: [''],
     maxParticipants: 15,
     availableSpots: 15,
     images: [''],
@@ -37,7 +38,8 @@ export default function AdminTours() {
     status: 'active',
     tourType: 'exclusive',
     contactTelegram: '',
-    contactInstagram: ''
+    contactInstagram: '',
+    fancyTitle: ''
   })
 
   useEffect(() => {
@@ -51,6 +53,33 @@ export default function AdminTours() {
       setFormData(prev => ({ ...prev, title: auto }))
     }
   }, [formData.country, formData.city])
+
+  // Auto-calculate startDate and endDate from availableDates and duration
+  useEffect(() => {
+    const validDates = formData.availableDates
+      .filter(d => d && d.trim())
+      .map(d => new Date(d))
+      .sort((a, b) => a - b)
+
+    if (validDates.length > 0) {
+      const firstDate = validDates[0]
+      const startDateStr = format(firstDate, 'yyyy-MM-dd')
+
+      let days = 1
+      const durationMatch = formData.duration.match(/(\d+)/)
+      if (durationMatch) {
+        days = parseInt(durationMatch[1])
+      }
+      // Assuming duration includes start day, so add days - 1
+      const endDate = new Date(firstDate)
+      endDate.setDate(endDate.getDate() + (days > 0 ? days - 1 : 0))
+      const endDateStr = format(endDate, 'yyyy-MM-dd')
+
+      if (startDateStr !== formData.startDate || endDateStr !== formData.endDate) {
+        setFormData(prev => ({ ...prev, startDate: startDateStr, endDate: endDateStr }))
+      }
+    }
+  }, [formData.availableDates, formData.duration])
 
   const fetchData = async () => {
     try {
@@ -87,6 +116,7 @@ export default function AdminTours() {
         title: formData.title && formData.title.trim()
           ? formData.title
           : formData.city || '',
+        fancyTitle: formData.fancyTitle ? formData.fancyTitle.trim() : '',
         city: formData.city || '',
         country: formData.country || '',
         price: Number(formData.price) || 0,
@@ -96,7 +126,8 @@ export default function AdminTours() {
         images: formData.images.filter(i => i && i.trim()),
         highlights: formData.highlights.filter(h => h && h.trim()),
         included: formData.included.filter(i => i && i.trim()),
-        notIncluded: formData.notIncluded.filter(i => i && i.trim())
+        notIncluded: formData.notIncluded.filter(i => i && i.trim()),
+        availableDates: formData.availableDates.filter(d => d && d.trim()).map(d => new Date(d))
       }
 
       // Remove empty fields that might cause validation issues
@@ -136,7 +167,7 @@ export default function AdminTours() {
   const handleEdit = (tour) => {
     setEditingTour(tour)
     setFormData({
-      destination: tour.destination._id,
+      destination: tour.destination?._id || '',
       country: tour.country || '',
       city: tour.city || '',
       title: tour.title,
@@ -147,6 +178,9 @@ export default function AdminTours() {
       duration: tour.duration,
       startDate: format(new Date(tour.startDate), 'yyyy-MM-dd'),
       endDate: format(new Date(tour.endDate), 'yyyy-MM-dd'),
+      availableDates: tour.availableDates?.length
+        ? tour.availableDates.map(d => format(new Date(d), 'yyyy-MM-dd'))
+        : [format(new Date(tour.startDate), 'yyyy-MM-dd')],
       maxParticipants: tour.maxParticipants,
       availableSpots: tour.availableSpots,
       images: tour.images.length ? tour.images : [''],
@@ -157,7 +191,8 @@ export default function AdminTours() {
       status: tour.status,
       tourType: tour.tourType || 'exclusive',
       contactTelegram: tour.contactTelegram || '',
-      contactInstagram: tour.contactInstagram || ''
+      contactInstagram: tour.contactInstagram || '',
+      fancyTitle: tour.fancyTitle || ''
     })
     setShowForm(true)
   }
@@ -175,6 +210,7 @@ export default function AdminTours() {
       duration: '',
       startDate: '',
       endDate: '',
+      availableDates: [''],
       maxParticipants: 15,
       availableSpots: 15,
       images: [''],
@@ -185,7 +221,8 @@ export default function AdminTours() {
       status: 'active',
       tourType: 'exclusive',
       contactTelegram: '',
-      contactInstagram: ''
+      contactInstagram: '',
+      fancyTitle: ''
     })
   }
 
@@ -316,6 +353,18 @@ export default function AdminTours() {
                   />
                 </div>
 
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Маркетингова назва (наприклад: "Вогонь та Лід")</label>
+                  <input
+                    type="text"
+                    value={formData.fancyTitle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fancyTitle: e.target.value }))}
+                    placeholder="Введіть красиву назву туру..."
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Якщо вказано, ця назва буде головною на сайті. Якщо ні - буде "Місто, Країна".</p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Ціна (EUR) *</label>
                   <input
@@ -351,28 +400,54 @@ export default function AdminTours() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Дата початку *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
+                {/* Available Dates (Primary Input) */}
+                <div className="md:col-span-2 p-4 bg-luxury-dark-lighter rounded-lg border border-luxury-gold/20">
+                  <label className="block text-sm font-medium mb-3 text-gray-300">
+                    📅 Дати виїзду
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Додайте всі дати виїзду. Система автоматично встановить першу дату як "Початок туру" та розрахує дату закінчення на основі тривалості.
+                  </p>
+                  <div className="space-y-2">
+                    {formData.availableDates.map((date, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="date"
+                          value={date}
+                          onChange={(e) => updateArrayField('availableDates', index, e.target.value)}
+                          className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                        />
+                        {formData.availableDates.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeArrayField('availableDates', index)}
+                            className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addArrayField('availableDates')}
+                    className="mt-3 text-sm text-luxury-gold hover:text-luxury-gold-light"
+                  >
+                    + Додати дату
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Дата закінчення *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
+                {/* Hidden Auto-Calculated Fields */}
+                <div className="hidden">
+                  <input type="date" value={formData.startDate} readOnly />
+                  <input type="date" value={formData.endDate} readOnly />
                 </div>
+              </div>
 
+
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Макс. учасників *</label>
                   <input
