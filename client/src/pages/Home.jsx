@@ -98,50 +98,53 @@ export default function Home() {
   }, [allTours, today])
 
 
-
-  // Підрахувати результати фільтрації на клієнті (без API запиту)
-  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
-    if (!dateFrom && !dateTo) return items.length
-
-    return items.filter(item => {
-      // For tours: check availableDates if present, else startDate
-      // For aviatury: check availableFrom
+  // Helper for safe date checking
+  const checkDates = (item, dateFrom, dateTo, isTour = false) => {
+    try {
       let datesToCheck;
       if (isTour) {
-        datesToCheck = item.availableDates && item.availableDates.length > 0
+        datesToCheck = Array.isArray(item.availableDates) && item.availableDates.length > 0
           ? item.availableDates.map(d => new Date(d))
           : [new Date(item.startDate)];
       } else {
         datesToCheck = [new Date(item.availableFrom)];
       }
 
-      // Check if any date falls within the range
       return datesToCheck.some(itemDate => {
-        itemDate.setHours(0, 0, 0, 0);
+        if (isNaN(itemDate.getTime())) return false; // Skip invalid dates
+
+        const checkDate = new Date(itemDate);
+        checkDate.setHours(0, 0, 0, 0);
 
         if (dateFrom && dateTo) {
           const from = new Date(dateFrom);
           const to = new Date(dateTo);
           from.setHours(0, 0, 0, 0);
           to.setHours(0, 0, 0, 0);
-          return itemDate >= from && itemDate <= to;
+          return checkDate >= from && checkDate <= to;
         }
-
         if (dateFrom) {
           const from = new Date(dateFrom);
           from.setHours(0, 0, 0, 0);
-          return itemDate >= from;
+          return checkDate >= from;
         }
-
         if (dateTo) {
           const to = new Date(dateTo);
           to.setHours(0, 0, 0, 0);
-          return itemDate <= to;
+          return checkDate <= to;
         }
-
         return true;
       });
-    }).length
+    } catch (e) {
+      console.error('Error filtering dates:', e);
+      return false;
+    }
+  };
+
+  // Підрахувати результати фільтрації на клієнті (без API запиту)
+  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
+    if (!dateFrom && !dateTo) return items.length
+    return items.filter(item => checkDates(item, dateFrom, dateTo, isTour)).length
   }
 
 
@@ -202,33 +205,7 @@ export default function Home() {
           // Тут краще викликати API, але оскільки ми вже маємо всі дані,
           // можемо відфільтрувати їх локально щоб уникнути зайвого запиту
           // Використовуємо ту ж логіку що і countFilteredResults
-          const filteredTours = allToursData.filter(item => {
-            const datesToCheck = item.availableDates && item.availableDates.length > 0
-              ? item.availableDates.map(d => new Date(d))
-              : [new Date(item.startDate)];
-
-            return datesToCheck.some(itemDate => {
-              itemDate.setHours(0, 0, 0, 0);
-              if (toursDateFrom && toursDateTo) {
-                const from = new Date(toursDateFrom);
-                const to = new Date(toursDateTo);
-                from.setHours(0, 0, 0, 0);
-                to.setHours(0, 0, 0, 0);
-                return itemDate >= from && itemDate <= to;
-              }
-              if (toursDateFrom) {
-                const from = new Date(toursDateFrom);
-                from.setHours(0, 0, 0, 0);
-                return itemDate >= from;
-              }
-              if (toursDateTo) {
-                const to = new Date(toursDateTo);
-                to.setHours(0, 0, 0, 0);
-                return itemDate <= to;
-              }
-              return true;
-            });
-          });
+          const filteredTours = allToursData.filter(item => checkDates(item, toursDateFrom, toursDateTo, true));
           setTours(filteredTours);
         } else {
           setTours(allToursData.slice(0, 6))
@@ -236,29 +213,7 @@ export default function Home() {
 
         // Якщо є активні фільтри для авіатурів - застосовуємо їх
         if (showAllAviatury || dateFrom || dateTo) {
-          const filteredAviatury = allAviaturyData.filter(item => {
-            const itemDate = new Date(item.availableFrom);
-            itemDate.setHours(0, 0, 0, 0);
-
-            if (dateFrom && dateTo) {
-              const from = new Date(dateFrom);
-              const to = new Date(dateTo);
-              from.setHours(0, 0, 0, 0);
-              to.setHours(0, 0, 0, 0);
-              return itemDate >= from && itemDate <= to;
-            }
-            if (dateFrom) {
-              const from = new Date(dateFrom);
-              from.setHours(0, 0, 0, 0);
-              return itemDate >= from;
-            }
-            if (dateTo) {
-              const to = new Date(dateTo);
-              to.setHours(0, 0, 0, 0);
-              return itemDate <= to;
-            }
-            return true;
-          });
+          const filteredAviatury = allAviaturyData.filter(item => checkDates(item, dateFrom, dateTo, false));
           setAviatury(filteredAviatury);
         } else {
           setAviatury(allAviaturyData)
