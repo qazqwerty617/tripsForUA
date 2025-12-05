@@ -79,13 +79,17 @@ export default function Home() {
       if (t.availableDates && t.availableDates.length > 0) {
         t.availableDates.forEach(d => {
           const date = new Date(d)
-          date.setHours(0, 0, 0, 0)
-          if (date >= todayDate) allDates.push(date)
+          if (!isNaN(date.getTime())) {
+            date.setHours(0, 0, 0, 0)
+            if (date >= todayDate) allDates.push(date)
+          }
         })
       } else if (t.startDate) {
         const date = new Date(t.startDate)
-        date.setHours(0, 0, 0, 0)
-        if (date >= todayDate) allDates.push(date)
+        if (!isNaN(date.getTime())) {
+          date.setHours(0, 0, 0, 0)
+          if (date >= todayDate) allDates.push(date)
+        }
       }
     })
 
