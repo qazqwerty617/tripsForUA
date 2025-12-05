@@ -194,36 +194,8 @@ export default function Home() {
       const allToursData = toursRes.data
       const allAviaturyData = aviaturyRes.data
 
-      // Зберігаємо оригінальні дані для max дат та підрахунку
       setAllTours(allToursData)
       setAllAviatury(allAviaturyData)
-
-      // Оновлюємо показані дані тільки якщо немає активного фільтра
-      // або якщо це перше завантаження / скидання фільтрів
-      if (resetFilters) {
-        setTours(allToursData.slice(0, 6))
-        setAviatury(allAviaturyData)
-      } else {
-        // Якщо є активні фільтри для турів - застосовуємо їх
-        if (showAllTours || toursDateFrom || toursDateTo) {
-          // Тут краще викликати API, але оскільки ми вже маємо всі дані,
-          // можемо відфільтрувати їх локально щоб уникнути зайвого запиту
-          // Використовуємо ту ж логіку що і countFilteredResults
-          const filteredTours = allToursData.filter(item => checkDates(item, toursDateFrom, toursDateTo, true));
-          setTours(filteredTours);
-        } else {
-          setTours(allToursData.slice(0, 6))
-        }
-
-        // Якщо є активні фільтри для авіатурів - застосовуємо їх
-        if (showAllAviatury || dateFrom || dateTo) {
-          const filteredAviatury = allAviaturyData.filter(item => checkDates(item, dateFrom, dateTo, false));
-          setAviatury(filteredAviatury);
-        } else {
-          setAviatury(allAviaturyData)
-        }
-      }
-
       setLoading(false)
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -256,60 +228,28 @@ export default function Home() {
     setSearchParams(params, { replace: true })
   }, [toursDateFrom, toursDateTo, showAllTours, dateFrom, dateTo, showAllAviatury, setSearchParams])
 
-  // Auto-apply filters when dates change
+  // Auto-apply filters when dates change (Client-side)
   useEffect(() => {
-    if (toursDateFrom || toursDateTo) {
-      const timer = setTimeout(() => {
-        applyToursFilter()
-      }, 300)
-      return () => clearTimeout(timer)
+    if (allTours.length > 0) {
+      if (showAllTours || toursDateFrom || toursDateTo) {
+        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, toursDateTo, true))
+        setTours(filtered)
+      } else {
+        setTours(allTours.slice(0, 6))
+      }
     }
-  }, [toursDateFrom, toursDateTo])
+  }, [toursDateFrom, toursDateTo, showAllTours, allTours])
 
   useEffect(() => {
-    if (dateFrom || dateTo) {
-      const timer = setTimeout(() => {
-        applyAviaturyFilter()
-      }, 300)
-      return () => clearTimeout(timer)
+    if (allAviatury.length > 0) {
+      if (showAllAviatury || dateFrom || dateTo) {
+        const filtered = allAviatury.filter(item => checkDates(item, dateFrom, dateTo, false))
+        setAviatury(filtered)
+      } else {
+        setAviatury(allAviatury)
+      }
     }
-  }, [dateFrom, dateTo])
-
-  const applyAviaturyFilter = async (overrideFrom, overrideTo) => {
-    try {
-      const params = new URLSearchParams()
-      params.set('status', 'active')
-
-      const from = overrideFrom !== undefined ? overrideFrom : dateFrom
-      const to = overrideTo !== undefined ? overrideTo : dateTo
-
-      if (from) params.set('from', from)
-      if (to) params.set('to', to)
-      const res = await api.get(`/ aviatury ? ${params.toString()} `)
-      setAviatury(res.data)
-      setShowAllAviatury(true)
-    } catch (error) {
-      console.error('Error filtering aviatury:', error)
-    }
-  }
-
-  const applyToursFilter = async (overrideFrom, overrideTo) => {
-    try {
-      const params = new URLSearchParams()
-      params.set('status', 'active')
-
-      const from = overrideFrom !== undefined ? overrideFrom : toursDateFrom
-      const to = overrideTo !== undefined ? overrideTo : toursDateTo
-
-      if (from) params.set('from', from)
-      if (to) params.set('to', to)
-      const res = await api.get(`/ tours ? ${params.toString()} `)
-      setTours(res.data)
-      setShowAllTours(true)
-    } catch (error) {
-      console.error('Error filtering tours:', error)
-    }
-  }
+  }, [dateFrom, dateTo, showAllAviatury, allAviatury])
 
   return (
     <div className="bg-luxury-dark">
@@ -420,8 +360,8 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => applyToursFilter()} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); fetchData(true); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
+                <button onClick={() => setShowAllTours(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
+                <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
             </div>
 
@@ -546,8 +486,8 @@ export default function Home() {
                 />
               </div>
               <div className="flex gap-3 md:col-span-2">
-                <button onClick={applyAviaturyFilter} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setDateFrom(''); setDateTo(''); setShowAllAviatury(false); fetchData(true); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
+                <button onClick={() => setShowAllAviatury(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
+                <button onClick={() => { setDateFrom(''); setDateTo(''); setShowAllAviatury(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
             </div>
 
