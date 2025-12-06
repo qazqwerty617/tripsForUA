@@ -62,6 +62,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   PUT /api/tours/reorder
+// @desc    Reorder tours
+// @access  Private/Admin
+router.put('/reorder', protect, admin, async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+
+    // Update order for each tour
+    const updates = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { order: index }
+      }
+    }));
+
+    await Tour.bulkWrite(updates);
+
+    res.json({ message: 'Порядок оновлено' });
+  } catch (error) {
+    res.status(500).json({ message: 'Помилка сервера', error: error.message });
+  }
+});
+
 // @route   GET /api/tours/:id
 // @desc    Get tour by ID
 // @access  Public
@@ -125,29 +148,6 @@ router.delete('/:id', protect, admin, async (req, res) => {
     }
 
     res.json({ message: 'Тур видалено' });
-  } catch (error) {
-    res.status(500).json({ message: 'Помилка сервера', error: error.message });
-  }
-});
-
-// @route   PUT /api/tours/reorder
-// @desc    Reorder tours
-// @access  Private/Admin
-router.put('/reorder', protect, admin, async (req, res) => {
-  try {
-    const { orderedIds } = req.body;
-
-    // Update order for each tour
-    const updates = orderedIds.map((id, index) => ({
-      updateOne: {
-        filter: { _id: id },
-        update: { order: index }
-      }
-    }));
-
-    await Tour.bulkWrite(updates);
-
-    res.json({ message: 'Порядок оновлено' });
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
   }

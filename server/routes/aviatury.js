@@ -43,6 +43,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   PUT /api/aviatury/reorder
+// @desc    Reorder aviatury
+// @access  Private/Admin
+router.put('/reorder', protect, admin, async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+
+    // Update order for each aviatur
+    const updates = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { order: index }
+      }
+    }));
+
+    await Aviatur.bulkWrite(updates);
+
+    res.json({ message: 'Порядок оновлено' });
+  } catch (error) {
+    res.status(500).json({ message: 'Помилка сервера', error: error.message });
+  }
+});
+
 // @route   GET /api/aviatury/:id
 // @desc    Get aviatur by ID
 // @access  Public
@@ -109,29 +132,6 @@ router.delete('/:id', protect, admin, async (req, res) => {
     }
 
     res.json({ message: 'Авіатур видалено' });
-  } catch (error) {
-    res.status(500).json({ message: 'Помилка сервера', error: error.message });
-  }
-});
-
-// @route   PUT /api/aviatury/reorder
-// @desc    Reorder aviatury
-// @access  Private/Admin
-router.put('/reorder', protect, admin, async (req, res) => {
-  try {
-    const { orderedIds } = req.body;
-
-    // Update order for each aviatur
-    const updates = orderedIds.map((id, index) => ({
-      updateOne: {
-        filter: { _id: id },
-        update: { order: index }
-      }
-    }));
-
-    await Aviatur.bulkWrite(updates);
-
-    res.json({ message: 'Порядок оновлено' });
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
   }
