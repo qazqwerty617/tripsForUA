@@ -76,40 +76,38 @@ export default function Home() {
   // Helper for safe date checking
   const checkDates = (item, dateFrom, dateTo, isTour = false) => {
     try {
-      let datesToCheck;
+      // Для турів: перевіряємо всі дати з availableDates або startDate
       if (isTour) {
-        datesToCheck = Array.isArray(item.availableDates) && item.availableDates.length > 0
-          ? item.availableDates.map(d => new Date(d))
-          : [new Date(item.startDate)];
-      } else {
-        datesToCheck = [new Date(item.availableFrom)];
+        // Збираємо всі дати туру
+        let tourDates = [];
+        if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
+          tourDates = item.availableDates.map(d => {
+            const date = new Date(d);
+            date.setHours(0, 0, 0, 0);
+            return date;
+          }).filter(d => !isNaN(d.getTime()));
+        } else if (item.startDate) {
+          const date = new Date(item.startDate);
+          date.setHours(0, 0, 0, 0);
+          if (!isNaN(date.getTime())) {
+            tourDates = [date];
+          }
+        }
+
+        if (tourDates.length === 0) return false;
+
+        // Якщо є фільтр "з дати" - показуємо тури, у яких є хоча б одна дата >= обраної
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          fromDate.setHours(0, 0, 0, 0);
+          return tourDates.some(d => d >= fromDate);
+        }
+
+        return true; // Якщо немає фільтру - показуємо всі
       }
 
-      return datesToCheck.some(itemDate => {
-        if (isNaN(itemDate.getTime())) return false; // Skip invalid dates
-
-        const checkDate = new Date(itemDate);
-        checkDate.setHours(0, 0, 0, 0);
-
-        if (dateFrom && dateTo) {
-          const from = new Date(dateFrom);
-          const to = new Date(dateTo);
-          from.setHours(0, 0, 0, 0);
-          to.setHours(0, 0, 0, 0);
-          return checkDate >= from && checkDate <= to;
-        }
-        if (dateFrom) {
-          const from = new Date(dateFrom);
-          from.setHours(0, 0, 0, 0);
-          return checkDate >= from;
-        }
-        if (dateTo) {
-          const to = new Date(dateTo);
-          to.setHours(0, 0, 0, 0);
-          return checkDate <= to;
-        }
-        return true;
-      });
+      // Для авіатурів - стара логіка (зараз не використовується)
+      return true;
     } catch (e) {
       console.error('Error filtering dates:', e);
       return false;
@@ -117,9 +115,9 @@ export default function Home() {
   };
 
   // Підрахувати результати фільтрації на клієнті (без API запиту)
-  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
-    if (!dateFrom && !dateTo) return items.length
-    return items.filter(item => checkDates(item, dateFrom, dateTo, isTour)).length
+  const countFilteredResults = (items, dateFrom, isTour = false) => {
+    if (!dateFrom) return items.length
+    return items.filter(item => checkDates(item, dateFrom, null, isTour)).length
   }
 
 
@@ -131,7 +129,7 @@ export default function Home() {
     // Пропускає оновлення якщо є активний фільтр
     const interval = setInterval(() => {
       // Не оновлюємо якщо є активний фільтр
-      if (!showAllTours && !toursDateFrom && !toursDateTo && !showAllAviatury && !dateFrom && !dateTo) {
+      if (!showAllTours && !toursDateFrom && !toursDateTo && resortFilter === 'all') {
         fetchData()
       }
     }, 120000) // 2 хвилини
@@ -141,7 +139,7 @@ export default function Home() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         // Не оновлюємо якщо є активний фільтр
-        if (!showAllTours && !toursDateFrom && !toursDateTo && !showAllAviatury && !dateFrom && !dateTo) {
+        if (!showAllTours && !toursDateFrom && !toursDateTo && resortFilter === 'all') {
           fetchData()
         }
       }
@@ -153,7 +151,7 @@ export default function Home() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [showAllTours, toursDateFrom, toursDateTo, showAllAviatury, dateFrom, dateTo])
+  }, [showAllTours, toursDateFrom, toursDateTo, resortFilter])
 
   const fetchData = async (resetFilters = false) => {
     try {
@@ -176,15 +174,11 @@ export default function Home() {
 
   // Автоматично підраховувати результати для турів в реальному часі
   useEffect(() => {
-    const count = countFilteredResults(allTours, toursDateFrom, toursDateTo, true)
+    const count = countFilteredResults(allTours, toursDateFrom, true)
     setFilteredToursCount(count)
-  }, [allTours, toursDateFrom, toursDateTo])
+  }, [allTours, toursDateFrom])
 
-  // Автоматично підраховувати результати для авіатурів в реальному часі
-  useEffect(() => {
-    const count = countFilteredResults(allAviatury, dateFrom, dateTo, false)
-    setFilteredAviaturyCount(count)
-  }, [allAviatury, dateFrom, dateTo])
+  // Видалено useEffect для filteredAviaturyCount - більше не використовується
 
   // Зберігати фільтри в URL
   useEffect(() => {
@@ -201,14 +195,14 @@ export default function Home() {
   // Auto-apply filters when dates change (Client-side)
   useEffect(() => {
     if (allTours.length > 0) {
-      if (showAllTours || toursDateFrom || toursDateTo) {
-        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, toursDateTo, true))
+      if (showAllTours || toursDateFrom) {
+        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, null, true))
         setTours(filtered)
       } else {
         setTours(allTours.slice(0, 6))
       }
     }
-  }, [toursDateFrom, toursDateTo, showAllTours, allTours])
+  }, [toursDateFrom, showAllTours, allTours])
 
   useEffect(() => {
     if (allAviatury.length > 0) {
@@ -404,8 +398,8 @@ export default function Home() {
               <button
                 onClick={() => setResortFilter('all')}
                 className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'all'
-                    ? 'bg-luxury-gold text-luxury-dark'
-                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  ? 'bg-luxury-gold text-luxury-dark'
+                  : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
                 Всі тури
@@ -413,8 +407,8 @@ export default function Home() {
               <button
                 onClick={() => setResortFilter('resort')}
                 className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'resort'
-                    ? 'bg-luxury-gold text-luxury-dark'
-                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  ? 'bg-luxury-gold text-luxury-dark'
+                  : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
                 🏖️ Курорти
@@ -422,8 +416,8 @@ export default function Home() {
               <button
                 onClick={() => setResortFilter('non-resort')}
                 className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'non-resort'
-                    ? 'bg-luxury-gold text-luxury-dark'
-                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  ? 'bg-luxury-gold text-luxury-dark'
+                  : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
                 🏔️ Не курорти
