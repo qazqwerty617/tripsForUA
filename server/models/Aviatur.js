@@ -63,6 +63,10 @@ const aviaturSchema = new mongoose.Schema({
   notIncluded: [{
     type: String
   }],
+  isResort: {
+    type: Boolean,
+    default: false
+  },
   status: {
     type: String,
     enum: ['active', 'inactive'],

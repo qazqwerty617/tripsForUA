@@ -25,8 +25,7 @@ export default function AdminAviatury() {
     nights: 6,
     hot: false,
     image: '',
-    availableFrom: '',
-    availableTo: '',
+    isResort: false,
     included: ['Переліт', 'Трансфер', 'Проживання'],
     notIncluded: ['Екскурсії', 'Страховка'],
     status: 'active'
@@ -68,8 +67,7 @@ export default function AdminAviatury() {
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
         nights: Number(formData.nights) || 6,
         hot: formData.hot || false,
-        availableFrom: formData.availableFrom ? new Date(formData.availableFrom) : undefined,
-        availableTo: formData.availableTo ? new Date(formData.availableTo) : undefined,
+        isResort: formData.isResort || false,
         included: formData.included.filter(i => i.trim()),
         notIncluded: formData.notIncluded.filter(i => i.trim())
       }
@@ -116,8 +114,7 @@ export default function AdminAviatury() {
       nights: aviatur.nights || 6,
       hot: aviatur.hot || false,
       image: aviatur.image,
-      availableFrom: aviatur.availableFrom ? new Date(aviatur.availableFrom).toISOString().slice(0, 10) : '',
-      availableTo: aviatur.availableTo ? new Date(aviatur.availableTo).toISOString().slice(0, 10) : '',
+      isResort: aviatur.isResort || false,
       included: aviatur.included || ['Переліт', 'Трансфер', 'Проживання'],
       notIncluded: aviatur.notIncluded || ['Екскурсії', 'Страховка'],
       status: aviatur.status
@@ -138,8 +135,7 @@ export default function AdminAviatury() {
       nights: 6,
       hot: false,
       image: '',
-      availableFrom: '',
-      availableTo: '',
+      isResort: false,
       included: ['Переліт', 'Трансфер', 'Проживання'],
       notIncluded: ['Екскурсії', 'Страховка'],
       status: 'active'
@@ -349,14 +345,25 @@ export default function AdminAviatury() {
                   />
                 </div>
 
-                <div className="md:col-span-2 flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.hot}
-                    onChange={(e) => setFormData({ ...formData, hot: e.target.checked })}
-                    className="w-4 h-4 text-luxury-gold accent-luxury-gold bg-luxury-dark border-luxury-gold/30 rounded"
-                  />
-                  <label className="ml-2 text-sm font-medium text-gray-300">🔥 Гарячий тур</label>
+                <div className="md:col-span-2 flex items-center gap-6">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.hot}
+                      onChange={(e) => setFormData({ ...formData, hot: e.target.checked })}
+                      className="w-4 h-4 text-luxury-gold accent-luxury-gold bg-luxury-dark border-luxury-gold/30 rounded"
+                    />
+                    <label className="ml-2 text-sm font-medium text-gray-300">🔥 Гарячий тур</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.isResort}
+                      onChange={(e) => setFormData({ ...formData, isResort: e.target.checked })}
+                      className="w-4 h-4 text-luxury-gold accent-luxury-gold bg-luxury-dark border-luxury-gold/30 rounded"
+                    />
+                    <label className="ml-2 text-sm font-medium text-gray-300">🏖️ Курорт</label>
+                  </div>
                 </div>
 
               </div>
@@ -364,26 +371,6 @@ export default function AdminAviatury() {
               <div className="border-t border-luxury-gold/20 my-6"></div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Доступно з</label>
-                  <input
-                    type="date"
-                    value={formData.availableFrom}
-                    onChange={(e) => setFormData({ ...formData, availableFrom: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Доступно до</label>
-                  <input
-                    type="date"
-                    value={formData.availableTo}
-                    onChange={(e) => setFormData({ ...formData, availableTo: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Статус</label>
                   <select
@@ -520,7 +507,7 @@ export default function AdminAviatury() {
                     Ціна
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Дати
+                    Тип
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
                     Статус
@@ -549,12 +536,10 @@ export default function AdminAviatury() {
                       €{aviatur.price}
                     </td>
                     <td className="px-6 py-4 text-gray-300">
-                      {(aviatur.availableFrom || aviatur.availableTo) ? (
-                        <span>
-                          {aviatur.availableFrom ? format(new Date(aviatur.availableFrom), 'd MMM', { locale: uk }) : '—'} — {aviatur.availableTo ? format(new Date(aviatur.availableTo), 'd MMM', { locale: uk }) : '—'}
-                        </span>
+                      {aviatur.isResort ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏖️ Курорт</span>
                       ) : (
-                        <span className="text-gray-500">—</span>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏔️ Не курорт</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

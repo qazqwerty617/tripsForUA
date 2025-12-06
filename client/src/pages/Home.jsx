@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Calendar, MapPin, Users, Star, ArrowRight, Check, X } from 'lucide-react'
+import { Calendar, MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -11,7 +11,6 @@ export default function Home() {
 
   // Refs for auto-focus
   const toursDateToRef = useRef(null)
-  const aviaturyDateToRef = useRef(null)
 
   const [tours, setTours] = useState([])
   const [aviatury, setAviatury] = useState([])
@@ -21,8 +20,7 @@ export default function Home() {
   const [selectedAviatur, setSelectedAviatur] = useState(null)
   const [showAviaturModal, setShowAviaturModal] = useState(false)
   const [showAllAviatury, setShowAllAviatury] = useState(() => searchParams.get('showAllAviatury') === 'true')
-  const [dateFrom, setDateFrom] = useState(() => searchParams.get('aviaturyFrom') || '')
-  const [dateTo, setDateTo] = useState(() => searchParams.get('aviaturyTo') || '')
+  const [resortFilter, setResortFilter] = useState(() => searchParams.get('resortFilter') || 'all') // 'all' | 'resort' | 'non-resort'
   const [toursDateFrom, setToursDateFrom] = useState(() => searchParams.get('toursFrom') || '')
   const [toursDateTo, setToursDateTo] = useState(() => searchParams.get('toursTo') || '')
   const [showAllTours, setShowAllTours] = useState(() => searchParams.get('showAllTours') === 'true')
@@ -39,33 +37,6 @@ export default function Home() {
     now.setHours(0, 0, 0, 0) // Обнуляємо час для точного порівняння дат
     return now.toISOString().split('T')[0]
   }, [])
-
-  // useMemo щоб перераховувати тільки коли allAviatury змінюється
-  const { minAviaturDate, maxAviaturDate } = useMemo(() => {
-    if (allAviatury.length === 0) return { minAviaturDate: '', maxAviaturDate: '' }
-    const todayDate = new Date(today)
-    todayDate.setHours(0, 0, 0, 0)
-
-    const futureAviatury = allAviatury.filter(a => {
-      if (!a.availableFrom) return false
-      const availableDate = new Date(a.availableFrom)
-      availableDate.setHours(0, 0, 0, 0)
-      return availableDate >= todayDate
-    })
-
-    if (futureAviatury.length === 0) return { minAviaturDate: '', maxAviaturDate: '' }
-
-    const dates = futureAviatury
-      .map(a => a.availableFrom ? new Date(a.availableFrom) : null)
-      .filter(d => d !== null)
-
-    if (dates.length === 0) return { minAviaturDate: '', maxAviaturDate: '' }
-
-    const minDate = new Date(Math.min(...dates)).toISOString().split('T')[0]
-    const maxDate = new Date(Math.max(...dates)).toISOString().split('T')[0]
-
-    return { minAviaturDate: minDate, maxAviaturDate: maxDate }
-  }, [allAviatury, today])
 
   // useMemo щоб перераховувати тільки коли allTours змінюється
   const { minTourDate, maxTourDate } = useMemo(() => {
@@ -221,12 +192,11 @@ export default function Home() {
     if (toursDateFrom) params.set('toursFrom', toursDateFrom)
     if (toursDateTo) params.set('toursTo', toursDateTo)
     if (showAllTours) params.set('showAllTours', 'true')
-    if (dateFrom) params.set('aviaturyFrom', dateFrom)
-    if (dateTo) params.set('aviaturyTo', dateTo)
+    if (resortFilter !== 'all') params.set('resortFilter', resortFilter)
     if (showAllAviatury) params.set('showAllAviatury', 'true')
 
     setSearchParams(params, { replace: true })
-  }, [toursDateFrom, toursDateTo, showAllTours, dateFrom, dateTo, showAllAviatury, setSearchParams])
+  }, [toursDateFrom, toursDateTo, showAllTours, resortFilter, showAllAviatury, setSearchParams])
 
   // Auto-apply filters when dates change (Client-side)
   useEffect(() => {
@@ -242,14 +212,15 @@ export default function Home() {
 
   useEffect(() => {
     if (allAviatury.length > 0) {
-      if (showAllAviatury || dateFrom || dateTo) {
-        const filtered = allAviatury.filter(item => checkDates(item, dateFrom, dateTo, false))
-        setAviatury(filtered)
-      } else {
-        setAviatury(allAviatury)
+      let filtered = allAviatury
+      if (resortFilter === 'resort') {
+        filtered = allAviatury.filter(item => item.isResort === true)
+      } else if (resortFilter === 'non-resort') {
+        filtered = allAviatury.filter(item => item.isResort !== true)
       }
+      setAviatury(filtered)
     }
-  }, [dateFrom, dateTo, showAllAviatury, allAviatury])
+  }, [resortFilter, allAviatury])
 
   return (
     <div className="bg-luxury-dark">
@@ -325,7 +296,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Авторські подорожі</h2>
-            <p className="text-xl text-gray-300">Забронюйте своє місце вже зараз</p>
+            <p className="text-xl text-gray-300">Обирай подорож мрії вже сьогодні</p>
           </div>
 
           {/* Фільтр за датами */}
@@ -423,77 +394,44 @@ export default function Home() {
       <section className="py-20 bg-luxury-dark" id="aviatury">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Авіатури</h2>
+            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Індивідуальні тури</h2>
             <p className="text-xl text-gray-300">Найкращі пропозиції для відпочинку</p>
           </div>
 
-          {/* Фільтр за датами */}
+          {/* Фільтр за типом */}
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
-
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">З дати</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    const newDateFrom = e.target.value
-                    setDateFrom(newDateFrom)
-
-                    let newDateTo = dateTo
-
-                    if (newDateFrom && !dateTo) {
-                      const from = new Date(newDateFrom)
-                      const autoTo = new Date(from.getFullYear(), from.getMonth() + 1, 0)
-                      const autoToStr = autoTo.toISOString().split('T')[0]
-                      if (!maxAviaturDate || autoToStr <= maxAviaturDate) {
-                        setDateTo(autoToStr)
-                        newDateTo = autoToStr
-                      } else if (maxAviaturDate) {
-                        setDateTo(maxAviaturDate)
-                        newDateTo = maxAviaturDate
-                      }
-                    }
-
-                    if (dateTo && newDateFrom > dateTo) {
-                      setDateTo('')
-                    }
-
-                    if (dateTo && newDateFrom > dateTo) {
-                      setDateTo('')
-                    }
-                  }}
-                  min={minAviaturDate || today}
-                  max={maxAviaturDate}
-                  lang="uk"
-                  className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">До дати</label>
-                <input
-                  ref={aviaturyDateToRef}
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value)
-                  }}
-                  min={dateFrom || minAviaturDate || today}
-                  max={maxAviaturDate}
-                  lang="uk"
-                  className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                />
-              </div>
-              <div className="flex gap-3 md:col-span-2">
-                <button onClick={() => setShowAllAviatury(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setDateFrom(''); setDateTo(''); setShowAllAviatury(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
-              </div>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => setResortFilter('all')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'all'
+                    ? 'bg-luxury-gold text-luxury-dark'
+                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  }`}
+              >
+                Всі тури
+              </button>
+              <button
+                onClick={() => setResortFilter('resort')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'resort'
+                    ? 'bg-luxury-gold text-luxury-dark'
+                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  }`}
+              >
+                🏖️ Курорти
+              </button>
+              <button
+                onClick={() => setResortFilter('non-resort')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'non-resort'
+                    ? 'bg-luxury-gold text-luxury-dark'
+                    : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
+                  }`}
+              >
+                🏔️ Не курорти
+              </button>
             </div>
-
-            {(dateFrom || dateTo) && (
-              <p className="text-sm text-gray-400 mt-3">
-                Знайдено: <span className="text-luxury-gold font-semibold">{filteredAviaturyCount}</span> {filteredAviaturyCount === 1 ? 'авіатур' : filteredAviaturyCount < 5 ? 'авіатури' : 'авіатурів'}
+            {resortFilter !== 'all' && (
+              <p className="text-sm text-gray-400 mt-3 text-center">
+                Знайдено: <span className="text-luxury-gold font-semibold">{aviatury.length}</span> {aviatury.length === 1 ? 'тур' : aviatury.length < 5 ? 'тури' : 'турів'}
               </p>
             )}
           </div>
@@ -558,7 +496,7 @@ export default function Home() {
                 onClick={() => setShowAllAviatury(true)}
                 className="inline-block border-2 border-luxury-gold text-luxury-gold px-8 py-3 rounded-full font-semibold hover:bg-luxury-gold hover:text-luxury-dark transition"
               >
-                Показати всі авіатури
+                Показати всі тури
               </button>
             </div>
           )}
@@ -579,7 +517,18 @@ export default function Home() {
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-100">Авторські маршрути</h3>
                     <p className="text-gray-300">
-                      Кожен тур розроблений з любов'ю та досвідом наших гідів
+                      Кожен тур розроблений досвідченими гідами
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-luxury-gold/20 rounded-full flex items-center justify-center">
+                    <Globe className="h-6 w-6 text-luxury-gold" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Всі туроператори в одному місці</h3>
+                    <p className="text-gray-300">
+                      Фільтруй всі тури за ціною та датами
                     </p>
                   </div>
                 </div>
@@ -590,7 +539,7 @@ export default function Home() {
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-100">Невеликі групи</h3>
                     <p className="text-gray-300">
-                      До 15 чоловік, щоб кожен отримав максимум уваги
+                      9-15 чоловік, щоб кожен почувався комфортно
                     </p>
                   </div>
                 </div>
@@ -601,7 +550,7 @@ export default function Home() {
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-100">Унікальні локації</h3>
                     <p className="text-gray-300">
-                      Не тільки популярні місця, а й приховані перлини
+                      Ви побачите місця, що недоступні більшості туристів
                     </p>
                   </div>
                 </div>
@@ -624,7 +573,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Готові до пригод?</h2>
           <p className="text-xl mb-8 text-gray-300">
-            Зв'яжіться з нами, і ми допоможемо обрати ідеальну подорож для вас
+            Звʼяжіться з нами у зручному месенджері та отримайте ідеальну пропозицію
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
