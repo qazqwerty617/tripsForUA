@@ -475,9 +475,9 @@ export default function Home() {
                     <div className="text-xl font-bold text-luxury-gold shrink-0">
                       від €{aviatur.price}
                     </div>
-                    <div className="text-sm text-gray-400 text-right">
-                      {format(new Date(aviatur.availableFrom), 'd MMM', { locale: uk })} — {format(new Date(aviatur.availableTo), 'd MMM', { locale: uk })}
-                    </div>
+                    {aviatur.isResort && (
+                      <div className="text-sm text-blue-400">🏖️ Курорт</div>
+                    )}
                   </div>
                 </div>
               </button>
@@ -639,15 +639,15 @@ export default function Home() {
                         <span className="text-luxury-gold font-semibold">{selectedAviatur.nights} ночей</span>
                       </div>
                       <div className="bg-luxury-dark px-4 py-2 rounded-lg border border-luxury-gold/30">
-                        <span className="text-gray-400 text-sm block">Дати</span>
-                        <span className="text-luxury-gold font-semibold">
-                          {format(new Date(selectedAviatur.availableFrom), 'd MMM', { locale: uk })} — {format(new Date(selectedAviatur.availableTo), 'd MMM', { locale: uk })}
-                        </span>
-                      </div>
-                      <div className="bg-luxury-dark px-4 py-2 rounded-lg border border-luxury-gold/30">
                         <span className="text-gray-400 text-sm block">Ціна</span>
                         <span className="text-luxury-gold font-semibold">від €{selectedAviatur.price}</span>
                       </div>
+                      {selectedAviatur.isResort && (
+                        <div className="bg-luxury-dark px-4 py-2 rounded-lg border border-blue-500/30">
+                          <span className="text-gray-400 text-sm block">Тип</span>
+                          <span className="text-blue-400 font-semibold">🏖️ Курорт</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="prose prose-invert max-w-none mb-8">
