@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, Calendar, LogOut, Plane, Shield, BarChart3, Eye, TrendingUp } from 'lucide-react'
+import { Package, Calendar, LogOut, Plane, Shield, BarChart3, Eye, TrendingUp, Globe } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import useAuthStore from '../../store/useAuthStore'
@@ -440,6 +440,24 @@ export default function AdminDashboard() {
                 </div>
               )}
 
+              {/* Country Stats */}
+              {analyticsData?.countryStats && Object.keys(analyticsData.countryStats).length > 0 && (
+                <div className="mb-8 bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-blue-400" />
+                    Топ країн
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {Object.entries(analyticsData.countryStats).map(([country, count]) => (
+                      <div key={country} className="bg-luxury-dark-lighter p-3 rounded border border-luxury-gold/5 flex justify-between items-center">
+                        <span className="text-gray-300 font-medium">{country === 'Unknown' ? 'Невідомо' : country}</span>
+                        <span className="bg-blue-900/30 text-blue-400 text-xs font-bold px-2 py-1 rounded-full">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tours Table */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-200 mb-4">📦 Авторські подорожі</h3>
@@ -461,8 +479,8 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 text-gray-400">{tour.country || '-'}</td>
                           <td className="px-4 py-3 text-right">
                             <span className={`px-2 py-1 rounded-full text-sm font-bold ${tour.views > 10 ? 'bg-emerald-900/30 text-emerald-400' :
-                                tour.views > 0 ? 'bg-blue-900/30 text-blue-400' :
-                                  'bg-gray-800 text-gray-500'
+                              tour.views > 0 ? 'bg-blue-900/30 text-blue-400' :
+                                'bg-gray-800 text-gray-500'
                               }`}>
                               {tour.views}
                             </span>
@@ -498,8 +516,8 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 text-gray-400">{aviatur.flag} {aviatur.country || '-'}</td>
                           <td className="px-4 py-3 text-right">
                             <span className={`px-2 py-1 rounded-full text-sm font-bold ${aviatur.views > 10 ? 'bg-emerald-900/30 text-emerald-400' :
-                                aviatur.views > 0 ? 'bg-blue-900/30 text-blue-400' :
-                                  'bg-gray-800 text-gray-500'
+                              aviatur.views > 0 ? 'bg-blue-900/30 text-blue-400' :
+                                'bg-gray-800 text-gray-500'
                               }`}>
                               {aviatur.views}
                             </span>

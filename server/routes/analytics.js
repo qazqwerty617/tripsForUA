@@ -4,6 +4,7 @@ const Analytics = require('../models/Analytics');
 const Tour = require('../models/Tour');
 const Aviatur = require('../models/Aviatur');
 const { protect, admin } = require('../middleware/auth');
+const geoip = require('geoip-lite');
 
 // Helper to detect device type from user agent
 const getDeviceType = (userAgent) => {
@@ -32,11 +33,17 @@ router.post('/view', async (req, res) => {
         const userAgent = req.headers['user-agent'] || '';
         const device = getDeviceType(userAgent);
 
+        // Detect country from IP
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const geo = geoip.lookup(ip);
+        const country = geo ? geo.country : 'Unknown';
+
         await Analytics.create({
             itemId,
             itemType,
             userAgent: userAgent.substring(0, 200), // Limit length
-            device
+            device,
+            country
         });
 
         res.status(201).json({ success: true });
@@ -98,11 +105,20 @@ router.get('/stats', protect, admin, async (req, res) => {
             { $group: { _id: '$device', count: { $sum: 1 } } }
         ]);
 
+        // Country breakdown
+        const countryStats = await Analytics.aggregate([
+            { $match: { viewedAt: { $gte: startDate } } },
+            { $group: { _id: '$country', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+
         res.json({
             totalViews,
             viewsByType: viewsByType.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             viewsPerDay,
             deviceStats: deviceStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
+            countryStats: countryStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             period
         });
     } catch (error) {

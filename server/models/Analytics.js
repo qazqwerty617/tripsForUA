@@ -23,6 +23,10 @@ const analyticsSchema = new mongoose.Schema({
         type: String,
         enum: ['mobile', 'tablet', 'desktop', 'unknown'],
         default: 'unknown'
+    },
+    country: {
+        type: String,
+        default: 'Unknown'
     }
 }, {
     timestamps: true
