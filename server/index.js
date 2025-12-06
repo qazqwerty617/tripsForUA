@@ -60,6 +60,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/aviatury', require('./routes/aviatury'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

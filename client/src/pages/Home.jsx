@@ -438,6 +438,9 @@ export default function Home() {
                 onClick={() => {
                   setSelectedAviatur(aviatur)
                   setShowAviaturModal(true)
+                  // Track view for analytics
+                  api.post('/analytics/view', { itemId: aviatur._id, itemType: 'Aviatur' })
+                    .catch(() => { }) // Silent fail
                 }}
                 className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group text-left h-full flex flex-col hover-lift"
               >

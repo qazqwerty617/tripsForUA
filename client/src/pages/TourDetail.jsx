@@ -25,6 +25,14 @@ export default function TourDetail() {
     fetchTour()
   }, [id])
 
+  // Track view for analytics
+  useEffect(() => {
+    if (id) {
+      api.post('/analytics/view', { itemId: id, itemType: 'Tour' })
+        .catch(() => { }) // Silent fail - analytics shouldn't break the page
+    }
+  }, [id])
+
   const fetchTour = async () => {
     try {
       const response = await api.get(`/tours/${id}`)

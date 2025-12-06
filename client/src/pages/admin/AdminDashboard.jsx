@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, Calendar, LogOut, Plane, Shield } from 'lucide-react'
+import { Package, Calendar, LogOut, Plane, Shield, BarChart3, Eye, TrendingUp } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import useAuthStore from '../../store/useAuthStore'
@@ -17,11 +17,32 @@ export default function AdminDashboard() {
 
   const [expiringAviatury, setExpiringAviatury] = useState([])
   const [expiringTours, setExpiringTours] = useState([])
-  const [activeModal, setActiveModal] = useState(null) // 'tours' | 'aviatury' | null
+  const [activeModal, setActiveModal] = useState(null) // 'tours' | 'aviatury' | 'analytics' | null
+  const [analyticsData, setAnalyticsData] = useState(null)
+  const [allItemsData, setAllItemsData] = useState({ tours: [], aviatury: [] })
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('7d')
 
   useEffect(() => {
     fetchStats()
+    fetchAnalytics()
   }, [])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [analyticsPeriod])
+
+  const fetchAnalytics = async () => {
+    try {
+      const [statsRes, itemsRes] = await Promise.all([
+        api.get(`/analytics/stats?period=${analyticsPeriod}`),
+        api.get(`/analytics/all-items?period=${analyticsPeriod}`)
+      ])
+      setAnalyticsData(statsRes.data)
+      setAllItemsData(itemsRes.data)
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+    }
+  }
 
   const fetchStats = async () => {
     try {
@@ -215,6 +236,26 @@ export default function AdminDashboard() {
             </div>
             <p className="text-xs text-gray-500 mt-2 relative z-10">Натисніть для деталей</p>
           </button>
+
+          {/* Analytics Card */}
+          <button
+            onClick={() => setActiveModal('analytics')}
+            className="bg-luxury-dark-card rounded-xl shadow-xl border border-emerald-500/30 p-6 hover:border-emerald-500/60 transition text-left group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
+              <BarChart3 className="h-16 w-16 text-emerald-500" />
+            </div>
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-gray-400 text-sm font-medium">Переглядів (7 днів)</p>
+                <p className="text-3xl font-bold text-emerald-500 mt-2">{analyticsData?.totalViews || 0}</p>
+              </div>
+              <div className="w-12 h-12 bg-emerald-900/20 rounded-full flex items-center justify-center group-hover:bg-emerald-900/40 transition">
+                <Eye className="h-6 w-6 text-emerald-500" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 relative z-10">📊 Аналітика переглядів</p>
+          </button>
         </div>
 
         {/* Quick Actions Links */}
@@ -319,6 +360,159 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analytics Modal */}
+      {activeModal === 'analytics' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setActiveModal(null)}>
+          <div className="bg-luxury-dark-card w-full max-w-4xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-luxury-gold/20 relative animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-luxury-gold/10 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-luxury-gold flex items-center gap-2">
+                <BarChart3 className="h-6 w-6" />
+                Аналітика переглядів
+              </h2>
+              <div className="flex items-center gap-3">
+                <select
+                  value={analyticsPeriod}
+                  onChange={(e) => setAnalyticsPeriod(e.target.value)}
+                  className="bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-luxury-gold"
+                >
+                  <option value="24h">За 24 години</option>
+                  <option value="7d">За 7 днів</option>
+                  <option value="30d">За 30 днів</option>
+                  <option value="all">Весь час</option>
+                </select>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-white transition">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)] custom-scrollbar">
+              {/* Stats Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <p className="text-gray-400 text-sm">Всього переглядів</p>
+                  <p className="text-2xl font-bold text-emerald-500">{analyticsData?.totalViews || 0}</p>
+                </div>
+                <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <p className="text-gray-400 text-sm">Авторські подорожі</p>
+                  <p className="text-2xl font-bold text-blue-500">{analyticsData?.viewsByType?.Tour || 0}</p>
+                </div>
+                <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <p className="text-gray-400 text-sm">Індивідуальні тури</p>
+                  <p className="text-2xl font-bold text-orange-500">{analyticsData?.viewsByType?.Aviatur || 0}</p>
+                </div>
+                <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <p className="text-gray-400 text-sm">Мобільних</p>
+                  <p className="text-2xl font-bold text-purple-500">{analyticsData?.deviceStats?.mobile || 0}</p>
+                </div>
+              </div>
+
+              {/* Mini Chart */}
+              {analyticsData?.viewsPerDay?.length > 0 && (
+                <div className="mb-8 bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
+                  <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-emerald-500" />
+                    Динаміка переглядів
+                  </h3>
+                  <div className="flex items-end gap-1 h-24">
+                    {analyticsData.viewsPerDay.map((day, i) => {
+                      const maxViews = Math.max(...analyticsData.viewsPerDay.map(d => d.count), 1)
+                      const height = (day.count / maxViews) * 100
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <div
+                            className="w-full bg-emerald-500/80 rounded-t hover:bg-emerald-400 transition"
+                            style={{ height: `${Math.max(height, 5)}%` }}
+                            title={`${day._id}: ${day.count} переглядів`}
+                          />
+                          <span className="text-xs text-gray-500 truncate w-full text-center">
+                            {day._id.slice(-5)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tours Table */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-200 mb-4">📦 Авторські подорожі</h3>
+                <div className="bg-luxury-dark rounded-lg border border-luxury-gold/10 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-luxury-dark-lighter">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Назва</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Країна</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-luxury-gold uppercase">Перегляди</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-luxury-gold/10">
+                      {allItemsData.tours.map((tour, index) => (
+                        <tr key={tour._id} className="hover:bg-luxury-dark-lighter transition">
+                          <td className="px-4 py-3 text-gray-400">{index + 1}</td>
+                          <td className="px-4 py-3 text-gray-100 font-medium">{tour.title}</td>
+                          <td className="px-4 py-3 text-gray-400">{tour.country || '-'}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className={`px-2 py-1 rounded-full text-sm font-bold ${tour.views > 10 ? 'bg-emerald-900/30 text-emerald-400' :
+                                tour.views > 0 ? 'bg-blue-900/30 text-blue-400' :
+                                  'bg-gray-800 text-gray-500'
+                              }`}>
+                              {tour.views}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {allItemsData.tours.length === 0 && (
+                        <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-500">Немає даних</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Aviatury Table */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-200 mb-4">✈️ Індивідуальні тури</h3>
+                <div className="bg-luxury-dark rounded-lg border border-luxury-gold/10 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-luxury-dark-lighter">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Назва</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Країна</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-luxury-gold uppercase">Перегляди</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-luxury-gold/10">
+                      {allItemsData.aviatury.map((aviatur, index) => (
+                        <tr key={aviatur._id} className="hover:bg-luxury-dark-lighter transition">
+                          <td className="px-4 py-3 text-gray-400">{index + 1}</td>
+                          <td className="px-4 py-3 text-gray-100 font-medium">{aviatur.name}</td>
+                          <td className="px-4 py-3 text-gray-400">{aviatur.flag} {aviatur.country || '-'}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className={`px-2 py-1 rounded-full text-sm font-bold ${aviatur.views > 10 ? 'bg-emerald-900/30 text-emerald-400' :
+                                aviatur.views > 0 ? 'bg-blue-900/30 text-blue-400' :
+                                  'bg-gray-800 text-gray-500'
+                              }`}>
+                              {aviatur.views}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {allItemsData.aviatury.length === 0 && (
+                        <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-500">Немає даних</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
