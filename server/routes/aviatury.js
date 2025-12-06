@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     console.log('🔍 Aviatury query params:', { status, from, to });
     console.log('📝 MongoDB query:', JSON.stringify(query, null, 2));
 
-    const aviatury = await Aviatur.find(query).sort({ hot: -1, availableFrom: 1 });
+    const aviatury = await Aviatur.find(query).sort({ order: 1, hot: -1, createdAt: -1 });
 
     console.log('✅ Found aviatury:', aviatury.length, aviatury.map(a => ({
       name: a.name,
@@ -109,6 +109,29 @@ router.delete('/:id', protect, admin, async (req, res) => {
     }
 
     res.json({ message: 'Авіатур видалено' });
+  } catch (error) {
+    res.status(500).json({ message: 'Помилка сервера', error: error.message });
+  }
+});
+
+// @route   PUT /api/aviatury/reorder
+// @desc    Reorder aviatury
+// @access  Private/Admin
+router.put('/reorder', protect, admin, async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+
+    // Update order for each aviatur
+    const updates = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { order: index }
+      }
+    }));
+
+    await Aviatur.bulkWrite(updates);
+
+    res.json({ message: 'Порядок оновлено' });
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
   }

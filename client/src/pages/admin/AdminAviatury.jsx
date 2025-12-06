@@ -1,11 +1,102 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, ArrowLeft, Check, X, Search } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Check, X, Search, GripVertical } from 'lucide-react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+// Sortable Row Component
+function SortableRow({ aviatur, handleEdit, handleDelete }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: aviatur._id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    backgroundColor: isDragging ? 'rgba(212, 175, 55, 0.1)' : undefined,
+  }
+
+  return (
+    <tr ref={setNodeRef} style={style} className="hover:bg-luxury-dark-lighter/50">
+      <td className="px-3 py-4">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-luxury-gold">
+          <GripVertical className="h-5 w-5" />
+        </button>
+      </td>
+      <td className="px-4 py-4">
+        <img src={aviatur.image} alt={aviatur.name} className="h-16 w-24 object-cover rounded" />
+      </td>
+      <td className="px-4 py-4">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{aviatur.flag}</span>
+          <div>
+            <div className="font-medium text-gray-100">{aviatur.name}</div>
+            <div className="text-sm text-gray-400">{aviatur.country}</div>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-4 text-gray-300">
+        €{aviatur.price}
+      </td>
+      <td className="px-4 py-4 text-gray-300">
+        {aviatur.isResort ? (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏖️ Курорт</span>
+        ) : (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏛️ Не курорт</span>
+        )}
+      </td>
+      <td className="px-4 py-4">
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${aviatur.status === 'active'
+          ? 'bg-green-500/20 text-green-400'
+          : 'bg-gray-500/20 text-gray-400'
+          }`}>
+          {aviatur.status === 'active' ? 'Активний' : 'Неактивний'}
+        </span>
+      </td>
+      <td className="px-4 py-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleEdit(aviatur)}
+            className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => handleDelete(aviatur._id)}
+            className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+}
 
 export default function AdminAviatury() {
   const [aviatury, setAviatury] = useState([])
@@ -34,6 +125,37 @@ export default function AdminAviatury() {
   useEffect(() => {
     fetchAviatury()
   }, [])
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event
+
+    if (active.id !== over.id) {
+      const oldIndex = aviatury.findIndex(item => item._id === active.id)
+      const newIndex = aviatury.findIndex(item => item._id === over.id)
+
+      const newOrder = arrayMove(aviatury, oldIndex, newIndex)
+      setAviatury(newOrder)
+
+      // Save to server
+      try {
+        await api.put('/aviatury/reorder', {
+          orderedIds: newOrder.map(item => item._id)
+        })
+        toast.success('Порядок збережено')
+      } catch (error) {
+        toast.error('Помилка збереження порядку')
+        fetchAviatury() // Reload original order
+      }
+    }
+  }
 
   const fetchAviatury = async () => {
     try {
@@ -493,83 +615,51 @@ export default function AdminAviatury() {
         )}
 
         <div className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 overflow-hidden">
+          <div className="p-4 border-b border-luxury-gold/20 bg-luxury-dark-lighter">
+            <p className="text-sm text-gray-400">💡 Перетягуйте елементи за іконку ≡ щоб змінити порядок відображення на сайті</p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-luxury-dark-lighter border-b border-luxury-gold/20">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Зображення
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Напрямок
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Ціна
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Тип
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Статус
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
-                    Дії
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-luxury-gold/10">
-                {filteredAviatury.map((aviatur) => (
-                  <tr key={aviatur._id} className="hover:bg-luxury-dark-lighter/50">
-                    <td className="px-6 py-4">
-                      <img src={aviatur.image} alt={aviatur.name} className="h-16 w-24 object-cover rounded" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{aviatur.flag}</span>
-                        <div>
-                          <div className="font-medium text-gray-100">{aviatur.name}</div>
-                          <div className="text-sm text-gray-400">{aviatur.country}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      €{aviatur.price}
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      {aviatur.isResort ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏖️ Курорт</span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏛️ Не курорт</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${aviatur.status === 'active'
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                        {aviatur.status === 'active' ? 'Активний' : 'Неактивний'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(aviatur)}
-                          className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(aviatur._id)}
-                          className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <table className="w-full">
+                <thead className="bg-luxury-dark-lighter border-b border-luxury-gold/20">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider w-12">
+
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Зображення
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Напрямок
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Ціна
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Тип
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Статус
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase tracking-wider">
+                      Дії
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <SortableContext items={filteredAviatury.map(a => a._id)} strategy={verticalListSortingStrategy}>
+                  <tbody className="divide-y divide-luxury-gold/10">
+                    {filteredAviatury.map((aviatur) => (
+                      <SortableRow
+                        key={aviatur._id}
+                        aviatur={aviatur}
+                        handleEdit={handleEdit}
+                        handleDelete={handleDelete}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </table>
+            </DndContext>
           </div>
         </div>
 

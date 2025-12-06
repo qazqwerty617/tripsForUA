@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 
     let tours = await Tour.find(query)
       .populate('destination')
-      .sort({ featured: -1, startDate: 1 }); // Featured first, then by date
+      .sort({ order: 1, featured: -1, startDate: 1 }); // Order first, then featured, then by date
 
     // Date range filter: check if any date in availableDates OR startDate is within range
     if (from || to) {
@@ -125,6 +125,29 @@ router.delete('/:id', protect, admin, async (req, res) => {
     }
 
     res.json({ message: 'Тур видалено' });
+  } catch (error) {
+    res.status(500).json({ message: 'Помилка сервера', error: error.message });
+  }
+});
+
+// @route   PUT /api/tours/reorder
+// @desc    Reorder tours
+// @access  Private/Admin
+router.put('/reorder', protect, admin, async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+
+    // Update order for each tour
+    const updates = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { order: index }
+      }
+    }));
+
+    await Tour.bulkWrite(updates);
+
+    res.json({ message: 'Порядок оновлено' });
   } catch (error) {
     res.status(500).json({ message: 'Помилка сервера', error: error.message });
   }

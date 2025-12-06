@@ -102,6 +102,10 @@ const tourSchema = new mongoose.Schema({
   contactInstagram: {
     type: String,
     default: ''
+  },
+  order: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true
