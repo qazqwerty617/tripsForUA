@@ -326,7 +326,7 @@ export default function AdminAviatury() {
             <Link to="/mng-x7k9p2-secure" className="text-luxury-gold hover:text-luxury-gold-light transition">
               <ArrowLeft className="h-6 w-6" />
             </Link>
-            <h1 className="text-3xl font-bold text-luxury-gold">Управління Авіатурами</h1>
+            <h1 className="text-3xl font-bold text-luxury-gold">Управління Індивідуальними турами</h1>
           </div>
           {!showForm && (
             <button

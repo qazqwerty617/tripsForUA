@@ -1,12 +1,108 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, ArrowLeft, Upload, X, Search } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Upload, X, Search, GripVertical } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import CountryCitySelector from '../../components/CountryCitySelector'
 import { countriesData } from '../../utils/countriesData'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+// Sortable Row Component for Tours
+function SortableTourRow({ tour, handleEdit, handleDelete, countriesData }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tour._id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    backgroundColor: isDragging ? 'rgba(212, 175, 55, 0.1)' : undefined,
+  }
+
+  return (
+    <tr ref={setNodeRef} style={style} className="hover:bg-luxury-dark-lighter transition">
+      <td className="px-3 py-4">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-luxury-gold">
+          <GripVertical className="h-5 w-5" />
+        </button>
+      </td>
+      <td className="px-4 py-4">
+        <div className="font-medium text-gray-100">{tour.title}</div>
+      </td>
+      <td className="px-4 py-4 text-gray-300">
+        {tour.country ? (
+          <div className="flex items-start gap-2">
+            <span className="text-2xl">
+              {countriesData.find(c => c.nameUk === tour.country)?.flag || '🌍'}
+            </span>
+            <div>
+              <div className="font-medium">{tour.country}</div>
+              {tour.city && <div className="text-sm text-gray-400">{tour.city}</div>}
+            </div>
+          </div>
+        ) : (
+          <>
+            <span className="text-2xl mr-2">{tour.destination?.flag}</span>
+            {tour.destination?.nameUk}
+          </>
+        )}
+      </td>
+      <td className="px-4 py-4 text-luxury-gold font-semibold">€{tour.price}</td>
+      <td className="px-4 py-4 text-sm text-gray-300">
+        {format(new Date(tour.startDate), 'dd.MM.yyyy')}
+      </td>
+      <td className="px-4 py-4 text-gray-300">
+        {tour.availableSpots}/{tour.maxParticipants}
+      </td>
+      <td className="px-4 py-4">
+        <span className={`px-2 py-1 text-xs rounded-full ${tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
+          tour.status === 'completed' ? 'bg-gray-700 text-gray-300 border border-gray-600' :
+            'bg-red-900/50 text-red-300 border border-red-700'
+          }`}>
+          {tour.status === 'active' ? 'Активний' :
+            tour.status === 'completed' ? 'Завершений' : 'Скасований'}
+        </span>
+      </td>
+      <td className="px-4 py-4 text-right">
+        <button
+          onClick={() => handleEdit(tour)}
+          className="text-luxury-gold hover:text-luxury-gold-light mr-3"
+        >
+          <Edit className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => handleDelete(tour._id)}
+          className="text-red-400 hover:text-red-300"
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
+      </td>
+    </tr>
+  )
+}
 
 export default function AdminTours() {
   const [tours, setTours] = useState([])
@@ -93,6 +189,37 @@ export default function AdminTours() {
     } catch (error) {
       toast.error('Помилка завантаження')
       setLoading(false)
+    }
+  }
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event
+
+    if (active.id !== over.id) {
+      const oldIndex = tours.findIndex(item => item._id === active.id)
+      const newIndex = tours.findIndex(item => item._id === over.id)
+
+      const newOrder = arrayMove(tours, oldIndex, newIndex)
+      setTours(newOrder)
+
+      // Save to server
+      try {
+        await api.put('/tours/reorder', {
+          orderedIds: newOrder.map(item => item._id)
+        })
+        toast.success('Порядок збережено')
+      } catch (error) {
+        toast.error('Помилка збереження порядку')
+        fetchData() // Reload original order
+      }
     }
   }
 
@@ -732,76 +859,38 @@ export default function AdminTours() {
           <div className="text-center py-12 text-gray-300">Завантаження...</div>
         ) : (
           <div className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-luxury-dark-lighter border-b border-luxury-gold/20">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Тур</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Напрямок</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Ціна</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Дата</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Місця</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Статус</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-luxury-gold uppercase">Дії</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-luxury-gold/10">
-                {filteredTours.map((tour) => (
-                  <tr key={tour._id} className="hover:bg-luxury-dark-lighter transition">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-100">{tour.title}</div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      {tour.country ? (
-                        <div className="flex items-start gap-2">
-                          <span className="text-2xl">
-                            {countriesData.find(c => c.nameUk === tour.country)?.flag || '🌍'}
-                          </span>
-                          <div>
-                            <div className="font-medium">{tour.country}</div>
-                            {tour.city && <div className="text-sm text-gray-400">{tour.city}</div>}
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-2xl mr-2">{tour.destination?.flag}</span>
-                          {tour.destination?.nameUk}
-                        </>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-luxury-gold font-semibold">€{tour.price}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">
-                      {format(new Date(tour.startDate), 'dd.MM.yyyy')}
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      {tour.availableSpots}/{tour.maxParticipants}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
-                        tour.status === 'completed' ? 'bg-gray-700 text-gray-300 border border-gray-600' :
-                          'bg-red-900/50 text-red-300 border border-red-700'
-                        }`}>
-                        {tour.status === 'active' ? 'Активний' :
-                          tour.status === 'completed' ? 'Завершений' : 'Скасований'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleEdit(tour)}
-                        className="text-luxury-gold hover:text-luxury-gold-light mr-3"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tour._id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </td>
+            <div className="p-4 border-b border-luxury-gold/20 bg-luxury-dark-lighter">
+              <p className="text-sm text-gray-400">💡 Перетягуйте елементи за іконку ≡ щоб змінити порядок відображення на сайті</p>
+            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <table className="w-full">
+                <thead className="bg-luxury-dark-lighter border-b border-luxury-gold/20">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-luxury-gold uppercase w-12"></th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Тур</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Напрямок</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Ціна</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Дата</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Місця</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Статус</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-luxury-gold uppercase">Дії</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <SortableContext items={filteredTours.map(t => t._id)} strategy={verticalListSortingStrategy}>
+                  <tbody className="divide-y divide-luxury-gold/10">
+                    {filteredTours.map((tour) => (
+                      <SortableTourRow
+                        key={tour._id}
+                        tour={tour}
+                        handleEdit={handleEdit}
+                        handleDelete={handleDelete}
+                        countriesData={countriesData}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </table>
+            </DndContext>
           </div>
         )}
       </div>

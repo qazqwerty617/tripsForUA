@@ -187,7 +187,7 @@ export default function AdminDashboard() {
           <div className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 p-6 hover:border-luxury-gold/40 transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm font-medium">Авіатурів</p>
+                <p className="text-gray-400 text-sm font-medium">Індивідуальних турів</p>
                 <p className="text-3xl font-bold text-luxury-gold mt-2">{stats.aviatury}</p>
               </div>
               <div className="w-12 h-12 bg-luxury-gold/20 rounded-full flex items-center justify-center">
@@ -215,26 +215,6 @@ export default function AdminDashboard() {
             </div>
             <p className="text-xs text-gray-500 mt-2 relative z-10">Натисніть для деталей</p>
           </button>
-
-          {/* Expiring Aviatury Card */}
-          <button
-            onClick={() => setActiveModal('aviatury')}
-            className="bg-luxury-dark-card rounded-xl shadow-xl border border-orange-500/30 p-6 hover:border-orange-500/60 transition text-left group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition">
-              <Calendar className="h-16 w-16 text-orange-500" />
-            </div>
-            <div className="flex items-center justify-between relative z-10">
-              <div>
-                <p className="text-gray-400 text-sm font-medium">Спливають (Авіа)</p>
-                <p className="text-3xl font-bold text-orange-500 mt-2">{expiringAviatury.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-orange-900/20 rounded-full flex items-center justify-center group-hover:bg-orange-900/40 transition">
-                <Calendar className="h-6 w-6 text-orange-500" />
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2 relative z-10">Натисніть для деталей</p>
-          </button>
         </div>
 
         {/* Quick Actions Links */}
@@ -258,10 +238,10 @@ export default function AdminDashboard() {
           >
             <Plane className="h-12 w-12 text-luxury-gold mb-4" />
             <h3 className="text-xl font-bold mb-2 text-gray-100 group-hover:text-luxury-gold transition">
-              Авіатури
+              Індивідуальні тури
             </h3>
             <p className="text-gray-300">
-              Керуйте пропозиціями авіатурів
+              Керуйте пропозиціями індивідуальних турів
             </p>
           </Link>
         </div>
