@@ -539,7 +539,7 @@ export default function AdminAviatury() {
                       {aviatur.isResort ? (
                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏖️ Курорт</span>
                       ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏔️ Не курорт</span>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏛️ Не курорт</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

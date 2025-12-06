@@ -420,7 +420,7 @@ export default function Home() {
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                🏔️ Не курорти
+                🏛️ Не курорти
               </button>
             </div>
             {resortFilter !== 'all' && (
