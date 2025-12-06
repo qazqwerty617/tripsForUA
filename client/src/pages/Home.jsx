@@ -297,7 +297,7 @@ export default function Home() {
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
 
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end relative z-50">
               <div className="md:col-span-2 relative">
                 <label className="block text-sm text-gray-300 mb-2">Оберіть дату початку туру</label>
                 <div className="relative">
@@ -313,6 +313,7 @@ export default function Home() {
                     max={maxTourDate}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
+                    style={{ position: 'relative', zIndex: 50 }}
                   />
                   {toursDateFrom && (
                     <button
