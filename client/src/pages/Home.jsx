@@ -245,6 +245,7 @@ export default function Home() {
                 Переглянути тури
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
+              {' '}
               <a
                 href="#contact"
                 className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 backdrop-blur-sm transition inline-flex items-center justify-center animate-scale-in"
