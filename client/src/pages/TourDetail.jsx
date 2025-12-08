@@ -153,7 +153,7 @@ export default function TourDetail() {
             {/* Description */}
             <div className="bg-white rounded-2xl p-8 shadow-md">
               <h2 className="text-3xl font-bold mb-4 text-gray-900">Про подорож</h2>
-              <p className="text-lg text-gray-700 leading-relaxed">
+              <p className="text-lg text-gray-700 leading-relaxed" style={{ overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
                 {tour.description}
               </p>
             </div>
