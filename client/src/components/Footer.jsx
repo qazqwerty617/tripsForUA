@@ -53,7 +53,7 @@ export default function Footer() {
           {/* Company Info - Last on mobile, First on desktop */}
           <div className="col-span-1 md:col-span-2 order-3 md:order-1">
             <div className="flex items-center space-x-2 mb-4">
-              <Plane className="h-8 w-8 text-primary-400" />
+              <Plane className="h-8 w-8 text-luxury-gold" />
               <span className="text-2xl font-bold">Trips for Ukraine</span>
             </div>
             <p className="text-gray-400 mb-4">

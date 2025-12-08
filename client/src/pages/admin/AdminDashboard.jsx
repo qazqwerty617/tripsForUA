@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       {/* Prevent indexing by search engines */}
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
-        <title>Admin Panel - TripsForUA</title>
+        <title>Admin Panel - Trips for Ukraine</title>
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
