@@ -317,7 +317,7 @@ export default function Home() {
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
             <p className="text-sm text-gray-400 mb-3">✈️ Оберіть період, коли хочете вилетіти</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative z-50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative z-30">
               <div className="md:col-span-1 relative">
                 <label className="block text-sm text-gray-300 mb-2">Виліт з</label>
                 <div className="relative">
@@ -344,7 +344,6 @@ export default function Home() {
                     max={toursDateTo || maxTourDate}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
-                    style={{ position: 'relative', zIndex: 50 }}
                   />
                   {toursDateFrom && (
                     <button
@@ -376,7 +375,6 @@ export default function Home() {
                     max={maxTourDate}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
-                    style={{ position: 'relative', zIndex: 50 }}
                     disabled={!toursDateFrom}
                   />
                   {toursDateTo && (
