@@ -8,7 +8,7 @@ const analyticsSchema = new mongoose.Schema({
     },
     itemType: {
         type: String,
-        enum: ['Tour', 'Aviatur'],
+        enum: ['Tour', 'Aviatur', 'Social'],
         required: true
     },
     viewedAt: {

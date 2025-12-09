@@ -26,15 +26,21 @@ router.post('/view', async (req, res) => {
             return res.status(400).json({ message: 'itemId and itemType are required' });
         }
 
-        if (!['Tour', 'Aviatur'].includes(itemType)) {
-            return res.status(400).json({ message: 'itemType must be Tour or Aviatur' });
+        if (!['Tour', 'Aviatur', 'Social'].includes(itemType)) {
+            return res.status(400).json({ message: 'itemType must be Tour, Aviatur or Social' });
         }
 
         const userAgent = req.headers['user-agent'] || '';
         const device = getDeviceType(userAgent);
 
         // Detect country from IP
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+        // Handle comma-separated list of IPs (e.g. "client, proxy1, proxy2")
+        if (ip && ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
         const geo = geoip.lookup(ip);
         const country = geo ? geo.country : 'Unknown';
 
@@ -113,12 +119,19 @@ router.get('/stats', protect, admin, async (req, res) => {
             { $limit: 10 }
         ]);
 
+        // Social clicks
+        const socialStats = await Analytics.aggregate([
+            { $match: { viewedAt: { $gte: startDate }, itemType: 'Social' } },
+            { $group: { _id: '$itemId', count: { $sum: 1 } } }
+        ]);
+
         res.json({
             totalViews,
             viewsByType: viewsByType.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             viewsPerDay,
             deviceStats: deviceStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             countryStats: countryStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
+            socialStats: socialStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             period
         });
     } catch (error) {

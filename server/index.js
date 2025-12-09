@@ -13,6 +13,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy (required for correct IP detection behind Nginx/Cloudflare)
+app.set('trust proxy', 1);
+
 // Middleware
 // Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));

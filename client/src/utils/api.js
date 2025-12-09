@@ -62,4 +62,12 @@ api.interceptors.response.use(
   }
 )
 
-export default api
+api.trackView = (itemId, itemType) => {
+  return api.post('/analytics/view', { itemId, itemType });
+};
+
+api.trackSocialClick = (platform) => {
+  return api.post('/analytics/view', { itemId: platform, itemType: 'Social' });
+};
+
+export default api;
