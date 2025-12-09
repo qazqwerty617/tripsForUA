@@ -13,4 +13,4 @@ Disallow: /api/upload
 # Disallow: /uploads
 
 # Sitemap (додайте після створення)
-# Sitemap: https://your-domain.com/sitemap.xml
+Sitemap: https://tripsforukrpremium.com/sitemap.xml
