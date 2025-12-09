@@ -419,15 +419,18 @@ export default function AdminDashboard() {
                     <TrendingUp className="h-5 w-5 text-emerald-500" />
                     Динаміка переглядів
                   </h3>
-                  <div className="flex items-end gap-1 h-24">
+                  <div className="flex items-end gap-2 h-32">
                     {analyticsData.viewsPerDay.map((day, i) => {
                       const maxViews = Math.max(...analyticsData.viewsPerDay.map(d => d.count), 1)
-                      const height = (day.count / maxViews) * 100
+                      const heightPercent = (day.count / maxViews) * 100
+                      // Minimum 20px or 15% height so bars are always visible
+                      const minHeight = Math.max(heightPercent, 15)
                       return (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="text-xs text-emerald-400 font-bold">{day.count}</span>
                           <div
-                            className="w-full bg-emerald-500/80 rounded-t hover:bg-emerald-400 transition"
-                            style={{ height: `${Math.max(height, 5)}%` }}
+                            className="w-full bg-emerald-500/80 rounded-t hover:bg-emerald-400 transition min-h-[20px]"
+                            style={{ height: `${minHeight}%` }}
                             title={`${day._id}: ${day.count} переглядів`}
                           />
                           <span className="text-xs text-gray-500 truncate w-full text-center">
