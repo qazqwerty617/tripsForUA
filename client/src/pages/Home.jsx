@@ -263,7 +263,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center animate-fade-in-up delay-100">
               <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
-                <Calendar className="h-8 w-8 text-luxury-gold" />
+                <Globe className="h-8 w-8 text-luxury-gold" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-luxury-gold">30+ напрямків</h3>
               <p className="text-gray-300">Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії</p>
