@@ -310,13 +310,13 @@ export default function Home() {
             <p className="text-xl text-gray-300">Обирай подорож мрії вже сьогодні</p>
           </div>
 
-          {/* Фільтр за датами */}
+          {/* Фільтр за датами вильоту */}
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
-
+            <p className="text-sm text-gray-400 mb-3">✈️ Оберіть період, коли хочете вилетіти</p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative z-50">
               <div className="md:col-span-1 relative">
-                <label className="block text-sm text-gray-300 mb-2">З якого числа</label>
+                <label className="block text-sm text-gray-300 mb-2">Виліт з</label>
                 <div className="relative">
                   <input
                     type="date"
@@ -346,7 +346,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="md:col-span-1 relative">
-                <label className="block text-sm text-gray-300 mb-2">По яке число</label>
+                <label className="block text-sm text-gray-300 mb-2">Виліт до</label>
                 <div className="relative">
                   <input
                     type="date"
