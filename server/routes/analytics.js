@@ -61,7 +61,8 @@ router.post('/view', async (req, res) => {
             itemType,
             userAgent: userAgent.substring(0, 200), // Limit length
             device,
-            country
+            country,
+            ip: ip || 'unknown' // Store IP for unique visitor counting
         };
 
         // Add source info for Social clicks
@@ -134,10 +135,11 @@ router.get('/stats', protect, admin, async (req, res) => {
             { $group: { _id: '$device', count: { $sum: 1 } } }
         ]);
 
-        // Country breakdown
+        // Country breakdown - count unique visitors (by IP)
         const countryStats = await Analytics.aggregate([
-            { $match: { viewedAt: { $gte: startDate } } },
-            { $group: { _id: '$country', count: { $sum: 1 } } },
+            { $match: { viewedAt: { $gte: startDate }, ip: { $exists: true, $ne: 'unknown' } } },
+            { $group: { _id: { country: '$country', ip: '$ip' } } }, // Group by country+IP to get unique
+            { $group: { _id: '$_id.country', count: { $sum: 1 } } }, // Then count unique IPs per country
             { $sort: { count: -1 } },
             { $limit: 10 }
         ]);

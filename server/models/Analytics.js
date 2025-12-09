@@ -35,6 +35,10 @@ const analyticsSchema = new mongoose.Schema({
     country: {
         type: String,
         default: 'Unknown'
+    },
+    // IP address for unique visitor counting (hashed for privacy in future)
+    ip: {
+        type: String
     }
 }, {
     timestamps: true
