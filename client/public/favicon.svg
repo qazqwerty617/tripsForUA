@@ -7,5 +7,5 @@
         stroke-width="1.5" 
         stroke-linecap="round" 
         stroke-linejoin="round"
-        transform="rotate(-45, 12, 12) translate(1, 1)" />
+        transform="rotate(45, 12, 12) translate(0, 0)" />
 </svg>
