@@ -439,9 +439,12 @@ export default function Home() {
 
           {!showAllTours && tours.length >= 6 && (
             <div className="text-center mt-12">
-              <Link to="/tours" className="inline-block border-2 border-luxury-gold text-luxury-gold px-8 py-3 rounded-full font-semibold hover:bg-luxury-gold hover:text-luxury-dark transition">
+              <button
+                onClick={() => setShowAllTours(true)}
+                className="inline-block border-2 border-luxury-gold text-luxury-gold px-8 py-3 rounded-full font-semibold hover:bg-luxury-gold hover:text-luxury-dark transition"
+              >
                 Всі тури
-              </Link>
+              </button>
             </div>
           )}
         </div>
