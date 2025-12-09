@@ -33,15 +33,27 @@ router.post('/view', async (req, res) => {
         const userAgent = req.headers['user-agent'] || '';
         const device = getDeviceType(userAgent);
 
-        // Detect country from IP
-        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        // Detect country from IP - check multiple headers (Cloudflare, Nginx, direct)
+        let ip = req.headers['cf-connecting-ip'] ||       // Cloudflare
+            req.headers['x-real-ip'] ||               // Nginx
+            req.headers['x-forwarded-for'] ||         // Standard proxy
+            req.socket.remoteAddress ||
+            req.ip;
 
         // Handle comma-separated list of IPs (e.g. "client, proxy1, proxy2")
         if (ip && ip.includes(',')) {
             ip = ip.split(',')[0].trim();
         }
 
-        const geo = geoip.lookup(ip);
+        // Clean up IPv6-mapped IPv4 addresses (::ffff:192.168.1.1 -> 192.168.1.1)
+        if (ip && ip.startsWith('::ffff:')) {
+            ip = ip.replace('::ffff:', '');
+        }
+
+        // Skip localhost IPs for geolocation
+        const isLocalhost = !ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost';
+
+        const geo = isLocalhost ? null : geoip.lookup(ip);
         const country = geo ? geo.country : 'Unknown';
 
         const analyticsData = {
