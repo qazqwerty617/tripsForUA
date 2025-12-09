@@ -331,13 +331,6 @@ export default function Home() {
                       if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
                         setToursDateTo('')
                       }
-                      // Auto-focus second date picker after selecting first date
-                      if (newDateFrom && toursDateToRef.current) {
-                        setTimeout(() => {
-                          toursDateToRef.current.focus()
-                          toursDateToRef.current.showPicker?.()
-                        }, 100)
-                      }
                     }}
                     min={minTourDate || today}
                     max={toursDateTo || maxTourDate}
@@ -365,8 +358,6 @@ export default function Home() {
                     onChange={(e) => {
                       const newDateTo = e.target.value
                       setToursDateTo(newDateTo)
-                      // Close the calendar picker
-                      e.target.blur()
                       // Auto-apply filter after selecting second date
                       if (newDateTo && toursDateFrom) {
                         setShowAllTours(true)
