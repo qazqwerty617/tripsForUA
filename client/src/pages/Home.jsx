@@ -331,15 +331,19 @@ export default function Home() {
                       if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
                         setToursDateTo('')
                       }
-                      // Auto-focus second date picker (focus only, no showPicker for Chrome compatibility)
+                      // Auto-focus second date picker
                       if (newDateFrom && toursDateToRef.current) {
-                        setTimeout(() => toursDateToRef.current.focus(), 150)
+                        setTimeout(() => {
+                          toursDateToRef.current.focus()
+                          toursDateToRef.current.showPicker?.()
+                        }, 150)
                       }
                     }}
+                    onClick={(e) => e.target.showPicker?.()}
                     min={minTourDate || today}
                     max={toursDateTo || maxTourDate}
                     lang="uk"
-                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
+                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
                     style={{ position: 'relative', zIndex: 50 }}
                   />
                   {toursDateFrom && (
@@ -367,10 +371,11 @@ export default function Home() {
                         setShowAllTours(true)
                       }
                     }}
+                    onClick={(e) => !e.target.disabled && e.target.showPicker?.()}
                     min={toursDateFrom || minTourDate || today}
                     max={maxTourDate}
                     lang="uk"
-                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
+                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
                     style={{ position: 'relative', zIndex: 50 }}
                     disabled={!toursDateFrom}
                   />
