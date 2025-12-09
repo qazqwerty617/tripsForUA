@@ -96,11 +96,27 @@ export default function Home() {
 
         if (tourDates.length === 0) return false;
 
-        // Якщо є фільтр "з дати" - показуємо тури, у яких є хоча б одна дата >= обраної
-        if (dateFrom) {
-          const fromDate = new Date(dateFrom);
-          fromDate.setHours(0, 0, 0, 0);
-          return tourDates.some(d => d >= fromDate);
+        // Якщо є фільтр по діапазону дат
+        if (dateFrom || dateTo) {
+          const fromDate = dateFrom ? new Date(dateFrom) : null;
+          const toDate = dateTo ? new Date(dateTo) : null;
+
+          if (fromDate) fromDate.setHours(0, 0, 0, 0);
+          if (toDate) toDate.setHours(0, 0, 0, 0);
+
+          return tourDates.some(d => {
+            // Тур має починатись в діапазоні
+            if (fromDate && toDate) {
+              return d >= fromDate && d <= toDate;
+            } else if (fromDate) {
+              // Тільки "з дати" - показувати тури >= обраної дати
+              return d >= fromDate;
+            } else if (toDate) {
+              // Тільки "по дату" - показувати тури <= обраної дати
+              return d <= toDate;
+            }
+            return false;
+          });
         }
 
         return true; // Якщо немає фільтру - показуємо всі
@@ -115,9 +131,9 @@ export default function Home() {
   };
 
   // Підрахувати результати фільтрації на клієнті (без API запиту)
-  const countFilteredResults = (items, dateFrom, isTour = false) => {
-    if (!dateFrom) return items.length
-    return items.filter(item => checkDates(item, dateFrom, null, isTour)).length
+  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
+    if (!dateFrom && !dateTo) return items.length
+    return items.filter(item => checkDates(item, dateFrom, dateTo, isTour)).length
   }
 
 
@@ -174,9 +190,9 @@ export default function Home() {
 
   // Автоматично підраховувати результати для турів в реальному часі
   useEffect(() => {
-    const count = countFilteredResults(allTours, toursDateFrom, true)
+    const count = countFilteredResults(allTours, toursDateFrom, toursDateTo, true)
     setFilteredToursCount(count)
-  }, [allTours, toursDateFrom])
+  }, [allTours, toursDateFrom, toursDateTo])
 
   // Видалено useEffect для filteredAviaturyCount - більше не використовується
 
@@ -195,14 +211,14 @@ export default function Home() {
   // Auto-apply filters when dates change (Client-side)
   useEffect(() => {
     if (allTours.length > 0) {
-      if (showAllTours || toursDateFrom) {
-        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, null, true))
+      if (showAllTours || toursDateFrom || toursDateTo) {
+        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, toursDateTo, true))
         setTours(filtered)
       } else {
         setTours(allTours.slice(0, 6))
       }
     }
-  }, [toursDateFrom, showAllTours, allTours])
+  }, [toursDateFrom, toursDateTo, showAllTours, allTours])
 
   useEffect(() => {
     if (allAviatury.length > 0) {
@@ -298,9 +314,9 @@ export default function Home() {
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
 
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end relative z-50">
-              <div className="md:col-span-2 relative">
-                <label className="block text-sm text-gray-300 mb-2">Оберіть дату початку туру</label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative z-50">
+              <div className="md:col-span-1 relative">
+                <label className="block text-sm text-gray-300 mb-2">З якого числа</label>
                 <div className="relative">
                   <input
                     type="date"
@@ -308,10 +324,13 @@ export default function Home() {
                     onChange={(e) => {
                       const newDateFrom = e.target.value
                       setToursDateFrom(newDateFrom)
-                      setToursDateTo('') // Clear To Date to ensure open-ended filtering
+                      // Auto-clear "To" if it's earlier than "From"
+                      if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
+                        setToursDateTo('')
+                      }
                     }}
                     min={minTourDate || today}
-                    max={maxTourDate}
+                    max={toursDateTo || maxTourDate}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
                     style={{ position: 'relative', zIndex: 50 }}
@@ -326,7 +345,31 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="md:col-span-1 relative">
+                <label className="block text-sm text-gray-300 mb-2">По яке число</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={toursDateTo}
+                    onChange={(e) => setToursDateTo(e.target.value)}
+                    min={toursDateFrom || minTourDate || today}
+                    max={maxTourDate}
+                    lang="uk"
+                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10"
+                    style={{ position: 'relative', zIndex: 50 }}
+                    disabled={!toursDateFrom}
+                  />
+                  {toursDateTo && (
+                    <button
+                      onClick={() => setToursDateTo('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="md:col-span-2 flex gap-3">
                 <button onClick={() => setShowAllTours(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
                 <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
