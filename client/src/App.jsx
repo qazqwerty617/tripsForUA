@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import Snowfall from './components/Snowfall'
 const Home = lazy(() => import('./pages/Home'))
 const Destinations = lazy(() => import('./pages/Destinations'))
 const DestinationDetail = lazy(() => import('./pages/DestinationDetail'))
@@ -19,6 +20,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-right" />
+      <Snowfall />
       <Navbar />
       <main className="flex-grow">
         <Suspense fallback={<div className="p-6 text-center">Завантаження...</div>}>
