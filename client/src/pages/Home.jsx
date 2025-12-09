@@ -265,22 +265,22 @@ export default function Home() {
               <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
                 <Calendar className="h-8 w-8 text-luxury-gold" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">130+ турів</h3>
-              <p className="text-gray-300">За 5 років організували понад 130 незабутніх подорожей</p>
+              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">30+ напрямків</h3>
+              <p className="text-gray-300">Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії</p>
             </div>
             <div className="text-center animate-fade-in-up delay-200">
               <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '0.5s' }}>
                 <Users className="h-8 w-8 text-luxury-gold" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">1300+ клієнтів</h3>
-              <p className="text-gray-300">Довіра тисяч мандрівників з України</p>
+              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">15000+ клієнтів</h3>
+              <p className="text-gray-300">Довіра - наше все. Більше 6 років на ринку, найбільша аудиторія в Україні</p>
             </div>
             <div className="text-center animate-fade-in-up delay-300">
               <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '1s' }}>
                 <Star className="h-8 w-8 text-luxury-gold" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">99% задоволених</h3>
-              <p className="text-gray-300">1000+ позитивних відгуків від наших клієнтів</p>
+              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">98% позитивних відгуків</h3>
+              <p className="text-gray-300">Кожен відгук унікальний, а емоції від туру - незабутні</p>
             </div>
           </div>
         </div>
