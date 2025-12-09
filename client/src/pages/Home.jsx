@@ -73,57 +73,60 @@ export default function Home() {
   }, [allTours, today])
 
 
-  // Helper for safe date checking
+  // Helper for safe date checking - OPTIMIZED
   const checkDates = (item, dateFrom, dateTo, isTour = false) => {
     try {
-      // Для турів: перевіряємо всі дати з availableDates або startDate
-      if (isTour) {
-        // Збираємо всі дати туру
-        let tourDates = [];
-        if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
-          tourDates = item.availableDates.map(d => {
+      if (!isTour) return true;
+
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+
+      // Collect all FUTURE dates from the tour
+      let futureDates = [];
+
+      // Priority 1: Use availableDates if they exist
+      if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
+        futureDates = item.availableDates
+          .map(d => {
             const date = new Date(d);
             date.setHours(0, 0, 0, 0);
             return date;
-          }).filter(d => !isNaN(d.getTime()));
-        } else if (item.startDate) {
-          const date = new Date(item.startDate);
-          date.setHours(0, 0, 0, 0);
-          if (!isNaN(date.getTime())) {
-            tourDates = [date];
-          }
-        }
-
-        if (tourDates.length === 0) return false;
-
-        // Якщо є фільтр по діапазону дат
-        if (dateFrom || dateTo) {
-          const fromDate = dateFrom ? new Date(dateFrom) : null;
-          const toDate = dateTo ? new Date(dateTo) : null;
-
-          if (fromDate) fromDate.setHours(0, 0, 0, 0);
-          if (toDate) toDate.setHours(0, 0, 0, 0);
-
-          return tourDates.some(d => {
-            // Тур має починатись в діапазоні
-            if (fromDate && toDate) {
-              return d >= fromDate && d <= toDate;
-            } else if (fromDate) {
-              // Тільки "з дати" - показувати тури >= обраної дати
-              return d >= fromDate;
-            } else if (toDate) {
-              // Тільки "по дату" - показувати тури <= обраної дати
-              return d <= toDate;
-            }
-            return false;
-          });
-        }
-
-        return true; // Якщо немає фільтру - показуємо всі
+          })
+          .filter(d => !isNaN(d.getTime()) && d >= todayDate);
       }
 
-      // Для авіатурів - стара логіка (зараз не використовується)
-      return true;
+      // Priority 2: Fall back to startDate if no availableDates
+      if (futureDates.length === 0 && item.startDate) {
+        const startDate = new Date(item.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (!isNaN(startDate.getTime()) && startDate >= todayDate) {
+          futureDates = [startDate];
+        }
+      }
+
+      // No future dates = tour not available
+      if (futureDates.length === 0) return false;
+
+      // If no filter applied, show all tours with future dates
+      if (!dateFrom && !dateTo) return true;
+
+      // Parse filter dates
+      const fromDate = dateFrom ? new Date(dateFrom) : null;
+      const toDate = dateTo ? new Date(dateTo) : null;
+      if (fromDate) fromDate.setHours(0, 0, 0, 0);
+      if (toDate) toDate.setHours(0, 0, 0, 0);
+
+      // Check if any future date falls within the range
+      return futureDates.some(d => {
+        if (fromDate && toDate) {
+          return d >= fromDate && d <= toDate;
+        } else if (fromDate) {
+          return d >= fromDate;
+        } else if (toDate) {
+          return d <= toDate;
+        }
+        return false;
+      });
     } catch (e) {
       console.error('Error filtering dates:', e);
       return false;
