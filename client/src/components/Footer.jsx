@@ -20,11 +20,7 @@ export default function Footer() {
                   Головна
                 </Link>
               </li>
-              <li>
-                <Link to="/destinations" className="text-gray-400 hover:text-primary-400 transition">
-                  Напрямки
-                </Link>
-              </li>
+
               <li>
                 <a href="/#tours" className="text-gray-400 hover:text-primary-400 transition">
                   Календар турів

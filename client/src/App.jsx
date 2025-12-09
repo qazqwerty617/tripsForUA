@@ -4,8 +4,6 @@ import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 const Home = lazy(() => import('./pages/Home'))
-const Destinations = lazy(() => import('./pages/Destinations'))
-const DestinationDetail = lazy(() => import('./pages/DestinationDetail'))
 const TourDetail = lazy(() => import('./pages/TourDetail'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -24,8 +22,7 @@ function App() {
         <Suspense fallback={<div className="p-6 text-center">Завантаження...</div>}>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/destinations" element={<Destinations />} />
-            <Route path="/destinations/:slug" element={<DestinationDetail />} />
+
             <Route path="/tours/:id" element={<TourDetail />} />
 
             {/* Admin Routes */}
