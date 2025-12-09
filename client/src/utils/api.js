@@ -66,8 +66,12 @@ api.trackView = (itemId, itemType) => {
   return api.post('/analytics/view', { itemId, itemType });
 };
 
-api.trackSocialClick = (platform) => {
-  return api.post('/analytics/view', { itemId: platform, itemType: 'Social' });
+api.trackSocialClick = (platform, source = null) => {
+  const payload = { itemId: platform, itemType: 'Social' };
+  if (source) {
+    payload.source = source;
+  }
+  return api.post('/analytics/view', payload);
 };
 
 export default api;

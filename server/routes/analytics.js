@@ -20,7 +20,7 @@ const getDeviceType = (userAgent) => {
 // @access  Public
 router.post('/view', async (req, res) => {
     try {
-        const { itemId, itemType } = req.body;
+        const { itemId, itemType, source } = req.body;
 
         if (!itemId || !itemType) {
             return res.status(400).json({ message: 'itemId and itemType are required' });
@@ -44,13 +44,24 @@ router.post('/view', async (req, res) => {
         const geo = geoip.lookup(ip);
         const country = geo ? geo.country : 'Unknown';
 
-        await Analytics.create({
+        const analyticsData = {
             itemId,
             itemType,
             userAgent: userAgent.substring(0, 200), // Limit length
             device,
             country
-        });
+        };
+
+        // Add source info for Social clicks
+        if (itemType === 'Social' && source) {
+            analyticsData.source = {
+                type: source.type || 'General',
+                id: source.id,
+                name: source.name
+            };
+        }
+
+        await Analytics.create(analyticsData);
 
         res.status(201).json({ success: true });
     } catch (error) {
@@ -125,6 +136,24 @@ router.get('/stats', protect, admin, async (req, res) => {
             { $group: { _id: '$itemId', count: { $sum: 1 } } }
         ]);
 
+        // Social clicks by source (which tour/aviatur page they clicked from)
+        const socialClicksBySource = await Analytics.aggregate([
+            { $match: { viewedAt: { $gte: startDate }, itemType: 'Social', 'source.type': { $exists: true } } },
+            {
+                $group: {
+                    _id: {
+                        platform: '$itemId',
+                        sourceType: '$source.type',
+                        sourceId: '$source.id',
+                        sourceName: '$source.name'
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 20 }
+        ]);
+
         res.json({
             totalViews,
             viewsByType: viewsByType.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
@@ -132,6 +161,7 @@ router.get('/stats', protect, admin, async (req, res) => {
             deviceStats: deviceStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             countryStats: countryStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
             socialStats: socialStats.reduce((acc, v) => ({ ...acc, [v._id]: v.count }), {}),
+            socialClicksBySource,
             period
         });
     } catch (error) {

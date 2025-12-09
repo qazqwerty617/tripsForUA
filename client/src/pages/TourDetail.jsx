@@ -203,6 +203,7 @@ export default function TourDetail() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition shadow-lg"
+                      onClick={() => api.trackSocialClick('telegram', { type: 'Tour', id: tour._id, name: tour.title }).catch(() => { })}
                     >
                       <MessageCircle className="h-6 w-6" />
                       Написати в Telegram
@@ -214,6 +215,7 @@ export default function TourDetail() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition shadow-lg"
+                      onClick={() => api.trackSocialClick('instagram', { type: 'Tour', id: tour._id, name: tour.title }).catch(() => { })}
                     >
                       <Instagram className="h-6 w-6" />
                       Написати в Instagram

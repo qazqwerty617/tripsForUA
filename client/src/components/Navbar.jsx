@@ -7,7 +7,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleSocialClick = (platform) => {
-    api.trackSocialClick(platform).catch(err => console.error('Social tracking error:', err));
+    api.trackSocialClick(platform, { type: 'General', name: 'Navbar' }).catch(err => console.error('Social tracking error:', err));
   }
 
   return (

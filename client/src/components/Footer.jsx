@@ -4,7 +4,7 @@ import api from '../utils/api'
 
 export default function Footer() {
   const handleSocialClick = (platform) => {
-    api.trackSocialClick(platform).catch(err => console.error('Social tracking error:', err));
+    api.trackSocialClick(platform, { type: 'General', name: 'Footer' }).catch(err => console.error('Social tracking error:', err));
   }
 
   return (

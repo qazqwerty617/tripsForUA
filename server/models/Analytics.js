@@ -2,14 +2,22 @@ const mongoose = require('mongoose');
 
 const analyticsSchema = new mongoose.Schema({
     itemId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: 'itemType'
+        type: mongoose.Schema.Types.Mixed, // ObjectId for Tour/Aviatur, String for Social ('telegram', 'instagram')
+        required: true
     },
     itemType: {
         type: String,
         enum: ['Tour', 'Aviatur', 'Social'],
         required: true
+    },
+    // Source info for Social clicks - which tour/aviatur page the user was on
+    source: {
+        type: {
+            type: String,
+            enum: ['Tour', 'Aviatur', 'General'] // General = homepage, navbar, footer
+        },
+        id: mongoose.Schema.Types.ObjectId,
+        name: String
     },
     viewedAt: {
         type: Date,
