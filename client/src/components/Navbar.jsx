@@ -16,7 +16,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16 md:h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <Plane className="h-6 w-6 md:h-8 md:w-8 text-luxury-gold" />
+              <img src="/logo.png" alt="Trips For Ukraine" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
               <span className="text-base md:text-2xl font-bold text-luxury-gold hover:text-luxury-gold-light transition" style={{ letterSpacing: '0.05em' }}>
                 TRIPS FOR UKRAINE
               </span>

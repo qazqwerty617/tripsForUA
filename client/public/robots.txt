@@ -8,6 +8,7 @@ Allow: /
 Disallow: /admin
 Disallow: /api/auth
 Disallow: /api/upload
+Disallow: /destinations
 
 # Не індексувати uploads (якщо потрібно)
 # Disallow: /uploads
