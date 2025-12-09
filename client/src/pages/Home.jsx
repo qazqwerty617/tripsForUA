@@ -391,7 +391,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Індивідуальні тури</h2>
-            <p className="text-xl text-gray-300">Найкращі пропозиції для відпочинку</p>
+            <p className="text-xl text-gray-300">Подорожуй комфортно, вигідно та без зайвих витрат</p>
           </div>
 
           {/* Фільтр за типом */}
