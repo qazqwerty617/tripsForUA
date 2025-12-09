@@ -331,6 +331,10 @@ export default function Home() {
                       if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
                         setToursDateTo('')
                       }
+                      // Auto-focus second date picker (focus only, no showPicker for Chrome compatibility)
+                      if (newDateFrom && toursDateToRef.current) {
+                        setTimeout(() => toursDateToRef.current.focus(), 150)
+                      }
                     }}
                     min={minTourDate || today}
                     max={toursDateTo || maxTourDate}
