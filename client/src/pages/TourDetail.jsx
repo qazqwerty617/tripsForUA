@@ -5,6 +5,7 @@ import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import toast from 'react-hot-toast'
+import { Helmet } from 'react-helmet-async'
 
 export default function TourDetail() {
   const { id } = useParams()
@@ -84,8 +85,55 @@ export default function TourDetail() {
     return <div className="min-h-screen flex items-center justify-center">Тур не знайдено</div>
   }
 
+  // Schema.org structured data
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    "name": tour.title,
+    "description": tour.description,
+    "touristType": [
+      "Audience"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": tour.price,
+      "priceCurrency": "EUR",
+      "availability": tour.availableSpots > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut"
+    },
+    "itinerary": tour.itinerary?.map(day => ({
+      "@type": "City",
+      "name": day.title,
+      "description": day.description
+    }))
+  }
+
+  if (tour.images?.[0]) {
+    structuredData.image = tour.images[0]
+  }
+
+  if (tour.startDate && tour.endDate) {
+    structuredData.startDate = tour.startDate
+    structuredData.endDate = tour.endDate
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{tour.title} | Trips for Ukraine</title>
+        <meta name="description" content={tour.description?.slice(0, 160) || 'Авторський тур від Trips for Ukraine'} />
+
+        {/* Open Graph */}
+        <meta property="og:title" content={tour.title} />
+        <meta property="og:description" content={tour.description?.slice(0, 160)} />
+        {tour.images?.[0] && <meta property="og:image" content={tour.images[0]} />}
+        <meta property="og:type" content="website" />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Helmet>
+
       {/* Hero */}
       <div className="relative h-[300px] md:h-[500px]">
         <img
