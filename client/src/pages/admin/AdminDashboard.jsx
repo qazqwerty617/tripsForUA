@@ -441,7 +441,7 @@ export default function AdminDashboard() {
               )}
 
               {/* Social Media Clicks */}
-              {analyticsData?.socialStats && (Object.keys(analyticsData.socialStats).length > 0 || analyticsData?.socialStats?.telegram || analyticsData?.socialStats?.instagram) && (
+              {analyticsData && (
                 <div className="mb-8 bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
                   <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-blue-400" />
