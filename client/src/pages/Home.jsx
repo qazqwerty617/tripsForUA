@@ -331,6 +331,13 @@ export default function Home() {
                       if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
                         setToursDateTo('')
                       }
+                      // Auto-focus second date picker after selecting first date
+                      if (newDateFrom && toursDateToRef.current) {
+                        setTimeout(() => {
+                          toursDateToRef.current.focus()
+                          toursDateToRef.current.showPicker?.()
+                        }, 100)
+                      }
                     }}
                     min={minTourDate || today}
                     max={toursDateTo || maxTourDate}
@@ -352,9 +359,17 @@ export default function Home() {
                 <label className="block text-sm text-gray-300 mb-2">Виліт до</label>
                 <div className="relative">
                   <input
+                    ref={toursDateToRef}
                     type="date"
                     value={toursDateTo}
-                    onChange={(e) => setToursDateTo(e.target.value)}
+                    onChange={(e) => {
+                      const newDateTo = e.target.value
+                      setToursDateTo(newDateTo)
+                      // Auto-apply filter after selecting second date
+                      if (newDateTo && toursDateFrom) {
+                        setShowAllTours(true)
+                      }
+                    }}
                     min={toursDateFrom || minTourDate || today}
                     max={maxTourDate}
                     lang="uk"
