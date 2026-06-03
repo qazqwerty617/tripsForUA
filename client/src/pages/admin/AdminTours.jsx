@@ -76,7 +76,7 @@ function SortableTourRow({ tour, handleEdit, handleDelete, countriesData }) {
         Будь-які
       </td>
       <td className="px-4 py-4 text-gray-300">
-        {tour.availableSpots}/{tour.maxParticipants}
+        {tour.maxParticipants > 0 ? `${tour.availableSpots}/${tour.maxParticipants}` : 'Без ліміту'}
       </td>
       <td className="px-4 py-4">
         <span className={`px-2 py-1 text-xs rounded-full ${tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
@@ -167,8 +167,8 @@ export default function AdminTours() {
     startDate: '',
     endDate: '',
     availableDates: [''],
-    maxParticipants: 15,
-    availableSpots: 15,
+    maxParticipants: '',
+    availableSpots: '',
     images: [''],
     highlights: [''],
     included: [''],
@@ -291,8 +291,8 @@ export default function AdminTours() {
         country: formData.country || '',
         price: Number(formData.price) || 0,
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
-        maxParticipants: Number(formData.maxParticipants) || 1,
-        availableSpots: Number(formData.availableSpots) || 1,
+        maxParticipants: formData.maxParticipants ? Number(formData.maxParticipants) : 0,
+        availableSpots: formData.availableSpots ? Number(formData.availableSpots) : 0,
         images: formData.images.filter(i => i && i.trim()),
         highlights: formData.highlights.filter(h => h && h.trim()),
         included: formData.included.filter(i => i && i.trim()),
@@ -386,8 +386,8 @@ export default function AdminTours() {
       startDate: '',
       endDate: '',
       availableDates: [''],
-      maxParticipants: 15,
-      availableSpots: 15,
+      maxParticipants: '',
+      availableSpots: '',
       images: [''],
       highlights: [''],
       included: [''],
@@ -626,7 +626,7 @@ export default function AdminTours() {
                 {/* Available Dates (Primary Input) */}
                 <div className="md:col-span-2 p-4 bg-luxury-dark-lighter rounded-lg border border-luxury-gold/20">
                   <label className="block text-sm font-medium mb-3 text-gray-300">
-                    📅 Дати виїзду
+                    📅 Дати виїзду (опціонально)
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
                     Додайте всі дати виїзду. Система автоматично встановить першу дату як "Початок туру" та розрахує дату закінчення на основі тривалості.
@@ -672,10 +672,9 @@ export default function AdminTours() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Макс. учасників *</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Макс. учасників (опціонально)</label>
                   <input
                     type="number"
-                    required
                     value={formData.maxParticipants}
                     onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
@@ -683,10 +682,9 @@ export default function AdminTours() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Вільні місця *</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Вільні місця (опціонально)</label>
                   <input
                     type="number"
-                    required
                     value={formData.availableSpots}
                     onChange={(e) => setFormData({ ...formData, availableSpots: e.target.value })}
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"

@@ -98,7 +98,7 @@ export default function TourDetail() {
       "@type": "Offer",
       "price": tour.price,
       "priceCurrency": "EUR",
-      "availability": tour.availableSpots > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut"
+      "availability": (!tour.maxParticipants || tour.availableSpots > 0) ? "https://schema.org/InStock" : "https://schema.org/SoldOut"
     },
     "itinerary": tour.itinerary?.map(day => ({
       "@type": "City",
@@ -338,7 +338,7 @@ export default function TourDetail() {
                 </div>
               </div>
 
-              {tour.availableSpots > 0 ? (
+              {(tour.maxParticipants <= 0 || !tour.maxParticipants || tour.availableSpots > 0) ? (
                 <button
                   onClick={() => setShowBookingForm(!showBookingForm)}
                   className="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-700 transition"
