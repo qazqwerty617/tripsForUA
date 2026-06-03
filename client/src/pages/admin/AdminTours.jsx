@@ -364,7 +364,9 @@ export default function AdminTours() {
       tourType: tour.tourType || 'exclusive',
       contactTelegram: tour.contactTelegram || '',
       contactInstagram: tour.contactInstagram || '',
-      fancyTitle: tour.fancyTitle || ''
+      fancyTitle: tour.fancyTitle || '',
+      priceUnit: tour.priceUnit || 'за людину',
+      tourBasis: tour.tourBasis || 'Індивідуальний / Груповий'
     })
     setShowForm(true)
   }
@@ -395,7 +397,9 @@ export default function AdminTours() {
       tourType: 'exclusive',
       contactTelegram: '',
       contactInstagram: '',
-      fancyTitle: ''
+      fancyTitle: '',
+      priceUnit: 'за людину',
+      tourBasis: 'Індивідуальний / Груповий'
     })
   }
 
@@ -722,6 +726,52 @@ export default function AdminTours() {
                     className="w-4 h-4 text-luxury-gold accent-luxury-gold"
                   />
                   <label className="ml-2 text-sm font-medium text-gray-300">Рекомендований</label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Одиниця виміру ціни *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.priceUnit}
+                    onChange={(e) => setFormData({ ...formData, priceUnit: e.target.value })}
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {['за людину', 'за сімʼю 2+1', 'за групу до 6 осіб'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, priceUnit: opt })}
+                        className="text-xs px-2.5 py-1 rounded bg-luxury-gold/10 hover:bg-luxury-gold/30 border border-luxury-gold/30 text-luxury-gold transition-colors"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис типу туру / Базис *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.tourBasis}
+                    onChange={(e) => setFormData({ ...formData, tourBasis: e.target.value })}
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {['Індивідуальний / Груповий', 'Індивідуальний', 'Груповий'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, tourBasis: opt })}
+                        className="text-xs px-2.5 py-1 rounded bg-luxury-gold/10 hover:bg-luxury-gold/30 border border-luxury-gold/30 text-luxury-gold transition-colors"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

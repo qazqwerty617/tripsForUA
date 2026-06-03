@@ -74,6 +74,8 @@ type Tour struct {
 	TourType        string               `bson:"tourType" json:"tourType"`
 	ContactTelegram string               `bson:"contactTelegram" json:"contactTelegram"`
 	ContactInstagram string              `bson:"contactInstagram" json:"contactInstagram"`
+	PriceUnit       string               `bson:"priceUnit" json:"priceUnit"`
+	TourBasis       string               `bson:"tourBasis" json:"tourBasis"`
 	Order           int                  `bson:"order" json:"order"`
 	CreatedAt       time.Time            `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UpdatedAt       time.Time            `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`

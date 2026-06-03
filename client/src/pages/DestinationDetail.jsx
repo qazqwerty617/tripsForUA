@@ -140,7 +140,7 @@ export default function DestinationDetail() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        <span>Індивідуально</span>
+                        <span>{tour.tourBasis || 'Індивідуально'}</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t">

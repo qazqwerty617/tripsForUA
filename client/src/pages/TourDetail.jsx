@@ -307,7 +307,7 @@ export default function TourDetail() {
                 <div className="text-4xl font-bold text-primary-600 mb-2">
                   від €{tour.price}
                 </div>
-                <p className="text-gray-600">за людину</p>
+                <p className="text-gray-600">{tour.priceUnit || 'за людину'}</p>
               </div>
 
               <div className="space-y-4 mb-6">
@@ -333,7 +333,7 @@ export default function TourDetail() {
                     Тип туру
                   </span>
                   <span className="font-semibold text-primary-600">
-                    Індивідуальний / Груповий
+                    {tour.tourBasis || 'Індивідуальний / Груповий'}
                   </span>
                 </div>
               </div>
