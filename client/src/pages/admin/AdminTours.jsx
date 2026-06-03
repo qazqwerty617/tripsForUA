@@ -162,6 +162,7 @@ export default function AdminTours() {
     shortDescription: '',
     price: '',
     originalPrice: '',
+    nights: '',
     duration: '',
     startDate: '',
     endDate: '',
@@ -344,6 +345,7 @@ export default function AdminTours() {
       shortDescription: tour.shortDescription,
       price: tour.price,
       originalPrice: tour.originalPrice || '',
+      nights: (() => { const m = (tour.duration || '').match(/(\d+)\s*ніч/); return m ? m[1] : '' })(),
       duration: tour.duration,
       startDate: format(new Date(tour.startDate), 'yyyy-MM-dd'),
       endDate: format(new Date(tour.endDate), 'yyyy-MM-dd'),
@@ -376,6 +378,7 @@ export default function AdminTours() {
       shortDescription: '',
       price: '',
       originalPrice: '',
+      nights: '',
       duration: '',
       startDate: '',
       endDate: '',
@@ -564,14 +567,55 @@ export default function AdminTours() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Тривалість *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="7 днів / 6 ночей"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="number"
+                        required
+                        min="1"
+                        max="90"
+                        placeholder="7"
+                        value={formData.days ?? ''}
+                        onChange={(e) => {
+                          const d = parseInt(e.target.value) || 0
+                          const n = parseInt(formData.nights) || 0
+                          setFormData(prev => ({
+                            ...prev,
+                            days: e.target.value,
+                            duration: d > 0 || n > 0 ? `${d || ''} днів / ${n || ''} ночей`.trim() : prev.duration
+                          }))
+                        }}
+                        className="w-20 px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold text-center text-lg font-bold"
+                      />
+                      <span className="text-xs text-gray-500 mt-1">днів</span>
+                    </div>
+                    <span className="text-luxury-gold font-bold text-xl mt-[-14px]">/</span>
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="89"
+                        placeholder="6"
+                        value={formData.nights ?? ''}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value) || 0
+                          const d = parseInt(formData.days) || 0
+                          setFormData(prev => ({
+                            ...prev,
+                            nights: e.target.value,
+                            duration: d > 0 || n > 0 ? `${d || ''} днів / ${n || ''} ночей`.trim() : prev.duration
+                          }))
+                        }}
+                        className="w-20 px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold text-center text-lg font-bold"
+                      />
+                      <span className="text-xs text-gray-500 mt-1">ночей</span>
+                    </div>
+                    {formData.duration && (
+                      <span className="ml-2 text-luxury-gold font-medium text-sm bg-luxury-gold/10 border border-luxury-gold/30 px-3 py-2 rounded-lg self-center">
+                        {formData.duration}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Available Dates (Primary Input) */}

@@ -80,3 +80,7 @@ scripts/
 *.sh
 .agent/
 .github/
+
+# Compiled Go binary
+server_go/server_bin.exe
+server_go/server_bin

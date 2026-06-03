@@ -8,6 +8,7 @@ import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
 import { generateAiTitle, generateAiAviaturyDescription } from '../../utils/aiHelper'
+import CountryCitySelector from '../../components/CountryCitySelector'
 import {
   DndContext,
   closestCenter,
@@ -106,11 +107,25 @@ export default function AdminAviatury() {
   const [showForm, setShowForm] = useState(false)
   const [editingAviatur, setEditingAviatur] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [countrySuggestions, setCountrySuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [nameSuggestions, setNameSuggestions] = useState([])
-  const [showNameSuggestions, setShowNameSuggestions] = useState(false)
   const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    country: '',
+    flag: '',
+    title: '',
+    description: '',
+    price: '',
+    originalPrice: '',
+    duration: '7 днів / 6 ночей',
+    nights: 6,
+    days: 7,
+    hot: false,
+    image: '',
+    isResort: false,
+    included: ['Переліт', 'Трансфер', 'Проживання'],
+    notIncluded: ['Екскурсії', 'Страховка'],
+    status: 'active'
+  })
 
   const handleGenerateAiTitle = async () => {
     if (!formData.country) {
@@ -149,135 +164,27 @@ export default function AdminAviatury() {
     }
   }
 
-  // Close suggestions on outside click
-  useEffect(() => {
-    const handleOutsideClick = () => {
-      setShowSuggestions(false)
-      setShowNameSuggestions(false)
-    }
-    document.addEventListener('click', handleOutsideClick)
-    return () => document.removeEventListener('click', handleOutsideClick)
-  }, [])
 
-  const handleNameInputChange = (val) => {
-    setFormData(prev => ({ ...prev, name: val }))
-    
-    let list = []
-    if (formData.country) {
-      const matchedCountry = countriesData.find(c => c.nameUk === formData.country)
-      if (matchedCountry && matchedCountry.cities) {
-        list = matchedCountry.cities
-      }
-    } else {
-      list = ["Шарм-ель-Шейх", "Анталія", "Крит", "Хургада", "Барселона", "Аліканте", "Тенеріфе", "Ніцца", "Рим", "Париж", "Балі", "Мальдіви", "Бодрум", "Мармарис", "Коломия", "Афіни", "Будапешт", "Відень", "Прага", "Венеція"]
-    }
-
-    if (val.trim().length >= 1) {
-      const query = val.toLowerCase()
-      const matches = list.filter(city => city.toLowerCase().includes(query)).slice(0, 8)
-      setNameSuggestions(matches)
-      setShowNameSuggestions(true)
-    } else {
-      setNameSuggestions(list.slice(0, 8))
-      setShowNameSuggestions(true)
-    }
-  }
-
-  const handleSelectName = (cityName, e) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-
-    let detectedCountry = formData.country
-    let detectedFlag = formData.flag
-
-    if (!detectedCountry) {
-      const countryObj = countriesData.find(c => c.cities && c.cities.includes(cityName))
-      if (countryObj) {
-        detectedCountry = countryObj.nameUk
-        detectedFlag = countryObj.flag
-      }
-    }
-
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        name: cityName,
-        country: detectedCountry,
-        flag: detectedFlag
-      }
-      if (detectedCountry && !updated.title) {
-        updated.title = `${detectedFlag || '✈️'} Подорож в ${cityName} (${detectedCountry})`
-      }
-      return updated
-    })
-
-    setNameSuggestions([])
-    setShowNameSuggestions(false)
-    if (detectedCountry && detectedCountry !== formData.country) {
-      toast.success(`Виявлено країну: ${detectedCountry} ${detectedFlag}`)
-    }
-  }
-
-  const handleCountryInputChange = (val) => {
-    setFormData(prev => ({ ...prev, country: val }))
-    if (val.trim().length >= 1) {
-      const query = val.toLowerCase()
-      const matches = countriesData.filter(c =>
-        c.nameUk.toLowerCase().includes(query) ||
-        c.nameEn.toLowerCase().includes(query)
-      ).slice(0, 6)
-      setCountrySuggestions(matches)
-      setShowSuggestions(true)
-    } else {
-      setCountrySuggestions([])
-      setShowSuggestions(false)
-    }
-  }
-
-  const handleSelectCountry = (country, e) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    setFormData(prev => ({
-      ...prev,
-      country: country.nameUk,
-      flag: country.flag,
-      title: prev.title || `${country.flag} Подорож в ${country.nameUk}`
-    }))
-    setCountrySuggestions([])
-    setShowSuggestions(false)
-    toast.success(`Країна ${country.nameUk} ${country.flag} вибрана!`)
-  }
 
   const handleNightsChange = (val) => {
-    const nightsNum = Number(val) || 0
+    const n = parseInt(val) || 0
+    const d = parseInt(formData.days) || 0
     setFormData(prev => ({
       ...prev,
       nights: val,
-      duration: nightsNum > 0 ? `${nightsNum + 1} днів / ${nightsNum} ночей` : prev.duration
+      duration: d > 0 || n > 0 ? `${d || ''} днів / ${n || ''} ночей`.trim() : prev.duration
     }))
   }
 
-  const [formData, setFormData] = useState({
-    name: '',
-    country: '',
-    flag: '',
-    title: '',
-    description: '',
-    price: '',
-    originalPrice: '',
-    duration: '7 днів / 6 ночей',
-    nights: 6,
-    hot: false,
-    image: '',
-    isResort: false,
-    included: ['Переліт', 'Трансфер', 'Проживання'],
-    notIncluded: ['Екскурсії', 'Страховка'],
-    status: 'active'
-  })
+  const handleDaysChange = (val) => {
+    const d = parseInt(val) || 0
+    const n = parseInt(formData.nights) || 0
+    setFormData(prev => ({
+      ...prev,
+      days: val,
+      duration: d > 0 || n > 0 ? `${d || ''} днів / ${n || ''} ночей`.trim() : prev.duration
+    }))
+  }
 
   useEffect(() => {
     fetchAviatury()
@@ -391,6 +298,7 @@ export default function AdminAviatury() {
       originalPrice: aviatur.originalPrice || '',
       duration: aviatur.duration || '7 днів / 6 ночей',
       nights: aviatur.nights || 6,
+      days: (() => { const m = (aviatur.duration || '').match(/(\d+)\s*(?:день|дні|днів)/); return m ? parseInt(m[1]) : 7 })(),
       hot: aviatur.hot || false,
       image: aviatur.image,
       isResort: aviatur.isResort || false,
@@ -412,6 +320,7 @@ export default function AdminAviatury() {
       originalPrice: '',
       duration: '7 днів / 6 ночей',
       nights: 6,
+      days: 7,
       hot: false,
       image: '',
       isResort: false,
@@ -519,89 +428,25 @@ export default function AdminAviatury() {
               {editingAviatur ? 'Редагувати авіатур' : 'Новий авіатур'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Country + City selector (same as Екскурсійні тури) */}
+              <div className="md:col-span-2">
+                <CountryCitySelector
+                  selectedCountry={formData.country}
+                  selectedCity={formData.name}
+                  onCountryChange={(val) => {
+                    const matched = countriesData.find(c => c.nameUk === val)
+                    setFormData(prev => ({
+                      ...prev,
+                      country: val,
+                      flag: matched ? matched.flag : prev.flag
+                    }))
+                  }}
+                  onCityChange={(val) => setFormData(prev => ({ ...prev, name: val }))}
+                  required
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва (місто/курорт/готель) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => handleNameInputChange(e.target.value)}
-                    onFocus={() => {
-                      handleNameInputChange(formData.name)
-                    }}
-                    placeholder="Крит"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                  {showNameSuggestions && nameSuggestions.length > 0 && (
-                    <div 
-                      className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {nameSuggestions.map((item) => (
-                        <button
-                          key={item}
-                          type="button"
-                          onClick={(e) => handleSelectName(item, e)}
-                          className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-luxury-gold hover:text-luxury-dark transition flex justify-between items-center"
-                        >
-                          <span>{item}</span>
-                          {!formData.country && (
-                            <span className="text-xs opacity-75">
-                              {countriesData.find(c => c.cities && c.cities.includes(item))?.nameUk}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Країна *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.country}
-                    onChange={(e) => handleCountryInputChange(e.target.value)}
-                    onFocus={() => {
-                      if (formData.country.trim().length >= 1) {
-                        setShowSuggestions(true)
-                      }
-                    }}
-                    placeholder="Греція"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                  {showSuggestions && countrySuggestions.length > 0 && (
-                    <div 
-                      className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {countrySuggestions.map((c) => (
-                        <button
-                          key={c.nameUk}
-                          type="button"
-                          onClick={(e) => handleSelectCountry(c, e)}
-                          className="w-full px-4 py-3 text-left hover:bg-luxury-gold/10 text-gray-100 flex items-center justify-between transition-colors duration-150"
-                        >
-                          <span className="font-medium text-sm text-gray-200">{c.nameUk}</span>
-                          <span className="text-xl">{c.flag}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Прапор</label>
-                  <input
-                    type="text"
-                    value={formData.flag}
-                    onChange={(e) => setFormData({ ...formData, flag: e.target.value })}
-                    placeholder="🇬🇷"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                </div>
 
                 <div className="md:col-span-2">
                   <div className="flex justify-between items-center mb-2">
@@ -672,24 +517,40 @@ export default function AdminAviatury() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Тривалість</label>
-                  <input
-                    type="text"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="7 днів / 6 ночей"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Кількість ночей</label>
-                  <input
-                    type="number"
-                    value={formData.nights}
-                    onChange={(e) => handleNightsChange(e.target.value)}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Тривалість *</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="number"
+                        required
+                        min="1"
+                        max="90"
+                        placeholder="7"
+                        value={formData.days ?? ''}
+                        onChange={(e) => handleDaysChange(e.target.value)}
+                        className="w-20 px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold text-center text-lg font-bold"
+                      />
+                      <span className="text-xs text-gray-500 mt-1">днів</span>
+                    </div>
+                    <span className="text-luxury-gold font-bold text-xl mt-[-14px]">/</span>
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="89"
+                        placeholder="6"
+                        value={formData.nights ?? ''}
+                        onChange={(e) => handleNightsChange(e.target.value)}
+                        className="w-20 px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold text-center text-lg font-bold"
+                      />
+                      <span className="text-xs text-gray-500 mt-1">ночей</span>
+                    </div>
+                    {formData.duration && (
+                      <span className="ml-2 text-luxury-gold font-medium text-sm bg-luxury-gold/10 border border-luxury-gold/30 px-3 py-2 rounded-lg self-center">
+                        {formData.duration}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="md:col-span-2 flex items-center gap-6">
