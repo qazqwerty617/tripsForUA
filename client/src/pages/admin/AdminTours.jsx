@@ -72,7 +72,7 @@ function SortableTourRow({ tour, handleEdit, handleDelete, countriesData }) {
       </td>
       <td className="px-4 py-4 text-luxury-gold font-semibold">€{tour.price}</td>
       <td className="px-4 py-4 text-sm text-gray-300">
-        {format(new Date(tour.startDate), 'dd.MM.yyyy')}
+        Будь-які
       </td>
       <td className="px-4 py-4 text-gray-300">
         {tour.availableSpots}/{tour.maxParticipants}
@@ -417,7 +417,7 @@ export default function AdminTours() {
               <Link to="/mng-x7k9p2-secure" className="text-luxury-gold hover:text-luxury-gold-light mb-2 inline-flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Назад
               </Link>
-              <h1 className="text-3xl font-bold text-luxury-gold">Авторські подорожі</h1>
+              <h1 className="text-3xl font-bold text-luxury-gold">Екскурсійні тури</h1>
             </div>
             <button
               onClick={() => {
@@ -458,25 +458,20 @@ export default function AdminTours() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Країна</label>
-                  <input
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    placeholder="Греція"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Місто</label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder="Афіни"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                <div className="md:col-span-2">
+                  <CountryCitySelector
+                    selectedCountry={formData.country}
+                    selectedCity={formData.city}
+                    onCountryChange={(val) => {
+                      const matchedCountry = countriesData.find(c => c.nameUk === val)
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        country: val,
+                        flag: matchedCountry ? matchedCountry.flag : prev.flag
+                      }))
+                    }}
+                    onCityChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+                    required
                   />
                 </div>
 

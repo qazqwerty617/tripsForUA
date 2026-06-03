@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Search } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Search, MapPin } from 'lucide-react'
 import { countriesData } from '../utils/countriesData'
 
 export default function CountryCitySelector({ 
@@ -10,127 +10,169 @@ export default function CountryCitySelector({
   required = false 
 }) {
   const [countrySearch, setCountrySearch] = useState('')
-  const [filteredCountries, setFilteredCountries] = useState(countriesData)
-  const [availableCities, setAvailableCities] = useState([])
-  const [citySearch, setCitySearch] = useState('')
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const [countrySuggestions, setCountrySuggestions] = useState([])
 
-  // Filter countries based on input
+  const [citySearch, setCitySearch] = useState('')
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false)
+  const [citySuggestions, setCitySuggestions] = useState([])
+
+  // Refs to close on click outside
+  const countryRef = useRef(null)
+  const cityRef = useRef(null)
+
   useEffect(() => {
-    const searchLower = (countrySearch || '').toLowerCase()
-    const filtered = !searchLower
-      ? countriesData
-      : countriesData.filter(country => 
-          country.nameUk.toLowerCase().includes(searchLower) ||
-          country.nameEn.toLowerCase().includes(searchLower)
-        )
-    setFilteredCountries(filtered)
+    setCountrySearch(selectedCountry || '')
+  }, [selectedCountry])
+
+  useEffect(() => {
+    setCitySearch(selectedCity || '')
+  }, [selectedCity])
+
+  // Filter countries
+  useEffect(() => {
+    if (!countrySearch.trim()) {
+      setCountrySuggestions(countriesData.slice(0, 10)) // show top 10 initially
+      return
+    }
+    const query = countrySearch.toLowerCase()
+    const filtered = countriesData.filter(c => 
+      c.nameUk.toLowerCase().includes(query) ||
+      c.nameEn.toLowerCase().includes(query)
+    ).slice(0, 10)
+    setCountrySuggestions(filtered)
   }, [countrySearch])
 
-  // Sync countrySearch input with selectedCountry for clarity
+  // Filter cities based on selected country
   useEffect(() => {
-    if (selectedCountry && countrySearch !== selectedCountry) {
-      setCountrySearch(selectedCountry)
+    if (!selectedCountry) {
+      setCitySuggestions([])
+      return
     }
-  }, [selectedCountry])
+    const countryObj = countriesData.find(c => c.nameUk === selectedCountry)
+    if (!countryObj || !countryObj.cities) {
+      setCitySuggestions([])
+      return
+    }
 
-  // Update available cities when country changes
+    const allCities = countryObj.cities.sort((a, b) => a.localeCompare(b, 'uk'))
+    if (!citySearch.trim()) {
+      setCitySuggestions(allCities)
+      return
+    }
+    const query = citySearch.toLowerCase()
+    const filtered = allCities.filter(city => 
+      city.toLowerCase().includes(query)
+    )
+    setCitySuggestions(filtered)
+  }, [selectedCountry, citySearch])
+
+  // Handle outside click
   useEffect(() => {
-    if (selectedCountry) {
-      const country = countriesData.find(c => c.nameUk === selectedCountry)
-      if (country) {
-        const cities = [...(country.cities || [])].sort((a, b) => a.localeCompare(b, 'uk'))
-        setAvailableCities(cities)
-      } else {
-        setAvailableCities([])
+    const handleOutside = (e) => {
+      if (countryRef.current && !countryRef.current.contains(e.target)) {
+        setShowCountrySuggestions(false)
       }
-    } else {
-      setAvailableCities([])
+      if (cityRef.current && !cityRef.current.contains(e.target)) {
+        setShowCitySuggestions(false)
+      }
     }
-  }, [selectedCountry])
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
 
-  const handleCountryInput = (e) => {
-    const val = e.target.value
-    setCountrySearch(val)
-  }
-
-  const handleCountrySelect = (e) => {
-    const val = e.target.value
-    onCountryChange(val)
+  const selectCountry = (country) => {
+    onCountryChange(country.nameUk)
+    setCountrySearch(country.nameUk)
+    setShowCountrySuggestions(false)
     if (onCityChange) onCityChange('')
   }
 
-  const handleCityChange = (e) => {
-    if (onCityChange) {
-      onCityChange(e.target.value)
-    }
+  const selectCityObj = (city) => {
+    if (onCityChange) onCityChange(city)
+    setCitySearch(city)
+    setShowCitySuggestions(false)
   }
 
   return (
-    <div className="space-y-4">
-      {/* Country Selection */}
-      <div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Country Input */}
+      <div ref={countryRef} className="relative">
         <label className="block text-sm font-medium mb-2 text-gray-300">
           Країна {required && '*'}
         </label>
-        <div className="relative mb-2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-luxury-gold" />
           <input
             type="text"
-            placeholder="Швидкий пошук країни..."
+            required={required}
+            placeholder="Введіть країну (напр. Греція)..."
             value={countrySearch}
-            onChange={handleCountryInput}
-            className="w-full pl-10 pr-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+            onChange={(e) => {
+              setCountrySearch(e.target.value)
+              setShowCountrySuggestions(true)
+            }}
+            onFocus={() => setShowCountrySuggestions(true)}
+            className="w-full pl-10 pr-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500 transition-all duration-200"
           />
         </div>
-        <select
-          required={required}
-          value={selectedCountry}
-          onChange={handleCountrySelect}
-          className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-        >
-          <option value="">Оберіть країну</option>
-          {filteredCountries.map((country) => (
-            <option key={country.nameUk} value={country.nameUk}>
-              {country.flag} {country.nameUk}
-            </option>
-          ))}
-        </select>
-        {countrySearch && filteredCountries.length === 0 && (
-          <p className="mt-1 text-sm text-gray-400">Країну не знайдено</p>
+        
+        {showCountrySuggestions && countrySuggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md">
+            {countrySuggestions.map((c) => (
+              <button
+                key={c.nameUk}
+                type="button"
+                onClick={() => selectCountry(c)}
+                className="w-full px-4 py-3 text-left hover:bg-luxury-gold/10 text-gray-100 flex items-center justify-between transition-colors duration-150"
+              >
+                <span className="font-medium text-sm text-gray-200">{c.nameUk}</span>
+                <span className="text-xl">{c.flag}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* City Selection (search + select) */}
-      {selectedCountry && (
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">
-            Місто {required && '*'}
-          </label>
-          <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Швидкий пошук міста..."
-              value={citySearch}
-              onChange={(e) => setCitySearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
-            />
-          </div>
-          <select
+      {/* City Input */}
+      <div ref={cityRef} className="relative">
+        <label className="block text-sm font-medium mb-2 text-gray-300">
+          Місто {required && '*'}
+        </label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-luxury-gold" />
+          <input
+            type="text"
             required={required && !!selectedCountry}
-            value={selectedCity || ''}
-            onChange={handleCityChange}
-            className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-          >
-            <option value="">Оберіть місто</option>
-            {availableCities
-              .filter(c => c.toLowerCase().includes(citySearch.toLowerCase()))
-              .map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-          </select>
+            disabled={!selectedCountry}
+            placeholder={selectedCountry ? "Введіть місто (напр. Афіни)..." : "Спершу оберіть країну"}
+            value={citySearch}
+            onChange={(e) => {
+              setCitySearch(e.target.value)
+              setShowCitySuggestions(true)
+            }}
+            onFocus={() => {
+              if (selectedCountry) setShowCitySuggestions(true)
+            }}
+            className="w-full pl-10 pr-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          />
         </div>
-      )}
+
+        {showCitySuggestions && citySuggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md">
+            {citySuggestions.map((city) => (
+              <button
+                key={city}
+                type="button"
+                onClick={() => selectCityObj(city)}
+                className="w-full px-4 py-3 text-left hover:bg-luxury-gold/10 text-gray-100 flex items-center justify-between transition-colors duration-150"
+              >
+                <span className="text-sm text-gray-200">{city}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

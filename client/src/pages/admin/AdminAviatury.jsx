@@ -6,6 +6,7 @@ import { uk } from 'date-fns/locale'
 import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import { countriesData } from '../../utils/countriesData'
 import {
   DndContext,
   closestCenter,
@@ -65,9 +66,9 @@ function SortableRow({ aviatur, handleEdit, handleDelete }) {
       </td>
       <td className="px-4 py-4 text-gray-300">
         {aviatur.isResort ? (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏖️ Курорт</span>
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">🏛️ Екскурсійний</span>
         ) : (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">🏛️ Не курорт</span>
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">✈️ Стандартний</span>
         )}
       </td>
       <td className="px-4 py-4">
@@ -104,6 +105,59 @@ export default function AdminAviatury() {
   const [showForm, setShowForm] = useState(false)
   const [editingAviatur, setEditingAviatur] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [countrySuggestions, setCountrySuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setShowSuggestions(false)
+    }
+    document.addEventListener('click', handleOutsideClick)
+    return () => document.removeEventListener('click', handleOutsideClick)
+  }, [])
+
+  const handleCountryInputChange = (val) => {
+    setFormData(prev => ({ ...prev, country: val }))
+    if (val.trim().length >= 1) {
+      const query = val.toLowerCase()
+      const matches = countriesData.filter(c =>
+        c.nameUk.toLowerCase().includes(query) ||
+        c.nameEn.toLowerCase().includes(query)
+      ).slice(0, 6)
+      setCountrySuggestions(matches)
+      setShowSuggestions(true)
+    } else {
+      setCountrySuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleSelectCountry = (country, e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    setFormData(prev => ({
+      ...prev,
+      country: country.nameUk,
+      flag: country.flag,
+      title: prev.title || `${country.flag} Подорож в ${country.nameUk}`
+    }))
+    setCountrySuggestions([])
+    setShowSuggestions(false)
+    toast.success(`Країна ${country.nameUk} ${country.flag} вибрана!`)
+  }
+
+  const handleNightsChange = (val) => {
+    const nightsNum = Number(val) || 0
+    setFormData(prev => ({
+      ...prev,
+      nights: val,
+      duration: nightsNum > 0 ? `${nightsNum + 1} днів / ${nightsNum} ночей` : prev.duration
+    }))
+  }
+
   const [formData, setFormData] = useState({
     name: '',
     country: '',
@@ -375,16 +429,39 @@ export default function AdminAviatury() {
                   />
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium mb-2 text-gray-300">Країна *</label>
                   <input
                     type="text"
                     required
                     value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    onChange={(e) => handleCountryInputChange(e.target.value)}
+                    onFocus={() => {
+                      if (formData.country.trim().length >= 1) {
+                        setShowSuggestions(true)
+                      }
+                    }}
                     placeholder="Греція"
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
+                  {showSuggestions && countrySuggestions.length > 0 && (
+                    <div 
+                      className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {countrySuggestions.map((c) => (
+                        <button
+                          key={c.nameUk}
+                          type="button"
+                          onClick={(e) => handleSelectCountry(c, e)}
+                          className="w-full px-4 py-3 text-left hover:bg-luxury-gold/10 text-gray-100 flex items-center justify-between transition-colors duration-150"
+                        >
+                          <span className="font-medium text-sm text-gray-200">{c.nameUk}</span>
+                          <span className="text-xl">{c.flag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -462,7 +539,7 @@ export default function AdminAviatury() {
                   <input
                     type="number"
                     value={formData.nights}
-                    onChange={(e) => setFormData({ ...formData, nights: e.target.value })}
+                    onChange={(e) => handleNightsChange(e.target.value)}
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
                 </div>
@@ -484,7 +561,7 @@ export default function AdminAviatury() {
                       onChange={(e) => setFormData({ ...formData, isResort: e.target.checked })}
                       className="w-4 h-4 text-luxury-gold accent-luxury-gold bg-luxury-dark border-luxury-gold/30 rounded"
                     />
-                    <label className="ml-2 text-sm font-medium text-gray-300">🏖️ Курорт</label>
+                    <label className="ml-2 text-sm font-medium text-gray-300">🏛️ Екскурсійний тур (інакше - стандартний)</label>
                   </div>
                 </div>
 
