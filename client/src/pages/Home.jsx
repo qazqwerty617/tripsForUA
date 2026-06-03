@@ -455,9 +455,8 @@ export default function Home() {
       {/* Aviatur Modal */}
       {
         showAviaturModal && selectedAviatur && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm" onClick={() => setShowAviaturModal(false)}>
-            <div className="flex min-h-full items-start justify-center p-4 py-8">
-              <div className="bg-gray-50 w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl relative animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-50" onClick={() => setShowAviaturModal(false)}>
+            <div className="min-h-full" onClick={e => e.stopPropagation()}>
                 <button
                   onClick={() => setShowAviaturModal(false)}
                   className="absolute top-4 right-4 z-20 bg-black/40 p-2 rounded-full text-white hover:bg-black/60 transition"
@@ -466,7 +465,7 @@ export default function Home() {
                 </button>
 
                 {/* Hero - dark with photo */}
-                <div className="relative h-[260px] md:h-[340px]">
+                <div className="relative h-[300px] md:h-[440px]">
                   <img
                     src={selectedAviatur.image}
                     alt={selectedAviatur.title}
@@ -605,7 +604,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
         )
