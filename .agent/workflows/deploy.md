@@ -2,40 +2,40 @@
 description: How to deploy updates to the production server
 ---
 
-To deploy the latest changes to your live website, follow these steps:
+# Deploy Instructions
 
-1.  **Connect to your server** via SSH:
-    ```bash
-    ssh root@YOUR_SERVER_IP
-    ```
+The backend is managed by **PM2** (process name: `tripsforua`).
+The bot runs in a separate **screen** session (`405593.bot`) — **do NOT touch it**.
 
-2.  **Navigate to the project directory** (adjust path if different):
-    ```bash
-    cd /var/www/tripsForUA
-    ```
+## Full Deploy (code + frontend + backend)
 
-3.  **Get the latest code** from GitHub:
-    ```bash
-    git pull
-    ```
+```bash
+# 1. Pull latest code
+cd /var/www/tripsforua && git fetch origin main && git reset --hard origin/main
 
-4.  **Update dependencies** (only if needed):
-    ```bash
-    npm install
-    cd client && npm install && cd ..
-    ```
+# 2. Rebuild frontend
+cd client && npm run build && cd ..
 
-5.  **Rebuild the Frontend** (Critical for visual changes):
-    ```bash
-    cd client
-    npm run build
-    cd ..
-    ```
+# 3. Restart backend via PM2
+pm2 restart tripsforua
+```
 
-6.  **Restart the Backend** (Critical for API changes):
-    ```bash
-    pm2 restart all
-    ```
-    *(Or specific service name if you know it)*
+## Quick Deploy (code changes only, no frontend changes)
 
-Done! Your site is now updated.
+```bash
+cd /var/www/tripsforua && git fetch origin main && git reset --hard origin/main && pm2 restart tripsforua
+```
+
+## Check Status
+
+```bash
+pm2 show tripsforua
+```
+
+## View Logs
+
+```bash
+pm2 logs tripsforua --lines 50
+# or
+tail -n 50 /var/www/tripsforua/app.log
+```
