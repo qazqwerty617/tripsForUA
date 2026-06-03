@@ -167,7 +167,7 @@ export default function TourDetail() {
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                <span>Індивідуальний підбір</span>
+                <span>{tour.tourBasis || 'Індивідуальний підбір'}</span>
               </div>
             </div>
           </div>
