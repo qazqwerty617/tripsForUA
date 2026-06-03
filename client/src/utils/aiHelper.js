@@ -316,39 +316,153 @@ export function generateAiImage(country, cityOrHotel) {
   const engCountry = translate(country);
   const engCity = translate(cityOrHotel);
 
-  // Mapped direct Unsplash premium photos for instant gorgeous results!
+  // Mapped direct Unsplash premium photos (multiple options per destination for variety!)
   const unsplashMap = {
-    'rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
-    'venice': 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=1200&q=80',
-    'florence': 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1200&q=80',
-    'amalfi': 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
-    'positano': 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
-    'italy': 'https://images.unsplash.com/photo-1498503182468-3b51cbb6cb24?w=1200&q=80',
-    'athens': 'https://images.unsplash.com/photo-1603565816030-6b389eeb23cb?w=1200&q=80',
-    'santorini': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1200&q=80',
-    'crete': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
-    'greece': 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1200&q=80',
-    'barcelona': 'https://images.unsplash.com/photo-1583779457094-0e34a99e91b3?w=1200&q=80',
-    'madrid': 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200&q=80',
-    'spain': 'https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=1200&q=80',
-    'paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
-    'france': 'https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?w=1200&q=80',
-    'istanbul': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1200&q=80',
-    'cappadocia': 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?w=1200&q=80',
-    'turkey': 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=1200&q=80',
-    'maldives': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
-    'bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
-    'thailand': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
-    'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
-    'uae': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
-    'switzerland': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80'
+    'rome': [
+      'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
+      'https://images.unsplash.com/photo-1529260839382-3f77210b457b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=1200&q=80'
+    ],
+    'venice': [
+      'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=1200&q=80',
+      'https://images.unsplash.com/photo-1520175480921-4edfa2983e0f?w=1200&q=80',
+      'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=1200&q=80',
+      'https://images.unsplash.com/photo-1498307818614-530904704959?w=1200&q=80'
+    ],
+    'florence': [
+      'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1200&q=80',
+      'https://images.unsplash.com/photo-1528114039593-4366cc08227d?w=1200&q=80',
+      'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1200&q=80',
+      'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1200&q=80'
+    ],
+    'amalfi': [
+      'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=80',
+      'https://images.unsplash.com/photo-1486848520232-a548232c95b7?w=1200&q=80'
+    ],
+    'positano': [
+      'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=80',
+      'https://images.unsplash.com/photo-1524168272322-47aa26d83af7?w=1200&q=80'
+    ],
+    'italy': [
+      'https://images.unsplash.com/photo-1498503182468-3b51cbb6cb24?w=1200&q=80',
+      'https://images.unsplash.com/photo-1471306224500-6d0d218be372?w=1200&q=80',
+      'https://images.unsplash.com/photo-1529260839382-3f77210b457b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=80'
+    ],
+    'athens': [
+      'https://images.unsplash.com/photo-1603565816030-6b389eeb23cb?w=1200&q=80',
+      'https://images.unsplash.com/photo-1555992336-03a23c7b20eb?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80'
+    ],
+    'santorini': [
+      'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1200&q=80',
+      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+      'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1200&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80'
+    ],
+    'crete': [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80',
+      'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1200&q=80'
+    ],
+    'greece': [
+      'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1200&q=80',
+      'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80',
+      'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1200&q=80'
+    ],
+    'barcelona': [
+      'https://images.unsplash.com/photo-1583779457094-0e34a99e91b3?w=1200&q=80',
+      'https://images.unsplash.com/photo-1523531294919-4bea7c65e894?w=1200&q=80',
+      'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80'
+    ],
+    'madrid': [
+      'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200&q=80',
+      'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=1200&q=80',
+      'https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=1200&q=80'
+    ],
+    'spain': [
+      'https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=1200&q=80',
+      'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=1200&q=80',
+      'https://images.unsplash.com/photo-1511527661048-7fe73d85e9a4?w=1200&q=80'
+    ],
+    'paris': [
+      'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
+      'https://images.unsplash.com/photo-1499856871958-5b9647a6409a?w=1200&q=80',
+      'https://images.unsplash.com/photo-1508050919630-b13ccd264022?w=1200&q=80',
+      'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?w=1200&q=80'
+    ],
+    'france': [
+      'https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?w=1200&q=80',
+      'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
+      'https://images.unsplash.com/photo-1499856871958-5b9647a6409a?w=1200&q=80'
+    ],
+    'istanbul': [
+      'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1200&q=80',
+      'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1527838832700-50592524df7e?w=1200&q=80'
+    ],
+    'cappadocia': [
+      'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?w=1200&q=80',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
+      'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=1200&q=80'
+    ],
+    'turkey': [
+      'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1200&q=80',
+      'https://images.unsplash.com/photo-1527838832700-50592524df7e?w=1200&q=80'
+    ],
+    'maldives': [
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1200&q=80',
+      'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1200&q=80'
+    ],
+    'bali': [
+      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=1200&q=80'
+    ],
+    'thailand': [
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+      'https://images.unsplash.com/photo-1528181304800-2f19084187f3?w=1200&q=80',
+      'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1200&q=80'
+    ],
+    'dubai': [
+      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
+      'https://images.unsplash.com/photo-1526495124232-a04e18491f5a?w=1200&q=80',
+      'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&q=80'
+    ],
+    'uae': [
+      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
+      'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&q=80',
+      'https://images.unsplash.com/photo-1526495124232-a04e18491f5a?w=1200&q=80'
+    ],
+    'switzerland': [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80'
+    ]
   };
 
   const cleanCity = engCity.toLowerCase().trim();
   const cleanCountry = engCountry.toLowerCase().trim();
 
-  if (unsplashMap[cleanCity]) return unsplashMap[cleanCity];
-  if (unsplashMap[cleanCountry]) return unsplashMap[cleanCountry];
+  let selectedUrl = null;
+
+  if (unsplashMap[cleanCity]) {
+    const list = unsplashMap[cleanCity];
+    selectedUrl = list[Math.floor(Math.random() * list.length)];
+  } else if (unsplashMap[cleanCountry]) {
+    const list = unsplashMap[cleanCountry];
+    selectedUrl = list[Math.floor(Math.random() * list.length)];
+  }
+
+  if (selectedUrl) {
+    return `${selectedUrl}&sig=${Math.floor(Math.random() * 1000000)}`;
+  }
 
   // Dynamic generated high quality aesthetic travel photo
   const queryStr = `${engCity || ''} ${engCountry || ''} travel resort luxury vacation sunny aesthetic pinterest style`.trim();
