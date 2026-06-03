@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'lucide-react'
+import { MapPin, Users, Star, ArrowRight, Check, X, Globe, Calendar, Clock } from 'lucide-react'
 import api from '../utils/api'
 
 
@@ -456,103 +456,152 @@ export default function Home() {
       {
         showAviaturModal && selectedAviatur && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm" onClick={() => setShowAviaturModal(false)}>
-            <div className="flex min-h-full items-center justify-center p-4">
-              <div className="bg-white w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl border border-gray-200 relative animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="flex min-h-full items-start justify-center p-4 py-8">
+              <div className="bg-gray-50 w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl relative animate-scale-in" onClick={e => e.stopPropagation()}>
                 <button
                   onClick={() => setShowAviaturModal(false)}
-                  className="absolute top-4 right-4 z-10 bg-black/40 p-2 rounded-full text-white hover:bg-black/60 transition"
+                  className="absolute top-4 right-4 z-20 bg-black/40 p-2 rounded-full text-white hover:bg-black/60 transition"
                 >
                   <X className="h-6 w-6" />
                 </button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="h-64 md:h-auto relative">
-                    <img
-                      src={selectedAviatur.image}
-                      alt={selectedAviatur.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover min-h-[300px] md:min-h-full"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-6">
-                      <div className="flex items-center text-white mb-2">
-                        <MapPin className="h-5 w-5 mr-2 text-primary-400" />
-                        <span className="text-lg">
-                          {selectedAviatur.name && selectedAviatur.name !== selectedAviatur.country ? (
-                            <>
-                              <span className="text-gray-300 mr-2">{selectedAviatur.country},</span>
-                              <span className="text-white font-bold">{selectedAviatur.name}</span>
-                            </>
-                          ) : (
-                            <span className="text-white font-semibold">{selectedAviatur.country}</span>
-                          )}
+                {/* Hero - dark with photo */}
+                <div className="relative h-[260px] md:h-[340px]">
+                  <img
+                    src={selectedAviatur.image}
+                    alt={selectedAviatur.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 pb-8 px-8 text-white">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-base bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
+                        {selectedAviatur.country}
+                      </span>
+                      {selectedAviatur.name && selectedAviatur.name !== selectedAviatur.country && (
+                        <span className="text-base bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
+                          {selectedAviatur.name}
                         </span>
+                      )}
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-3">{selectedAviatur.title}</h2>
+                    <div className="flex flex-wrap gap-5 text-base">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>Будь-які дати (під запит)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{selectedAviatur.nights} ночей</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>{selectedAviatur.isResort ? 'Екскурсійний' : 'Індивідуальний підбір'}</span>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="p-6 md:p-8 bg-white">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">{selectedAviatur.title}</h2>
+                {/* Content */}
+                <div className="px-6 py-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left content */}
+                    <div className="lg:col-span-2 space-y-6">
+                      {/* Description */}
+                      <div className="bg-white rounded-2xl p-7 shadow-md">
+                        <h3 className="text-2xl font-bold mb-4 text-gray-900">Про подорож</h3>
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-line">{selectedAviatur.description}</p>
+                      </div>
 
-                    <div className="flex flex-wrap gap-4 mb-6">
-                      <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
-                        <span className="text-gray-500 text-sm block">Тривалість</span>
-                        <span className="text-gray-900 font-semibold">{selectedAviatur.nights} ночей</span>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
-                        <span className="text-gray-500 text-sm block">Ціна</span>
-                        <span className="text-primary-600 font-semibold">від €{selectedAviatur.price}</span>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
-                        <span className="text-gray-500 text-sm block">Категорія</span>
-                        <span className="text-gray-900 font-semibold">
-                          {selectedAviatur.isResort ? '🏛️ Екскурсійний' : '✈️ Стандартний'}
-                        </span>
+                      {/* Included / Not included */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {selectedAviatur.included && selectedAviatur.included.length > 0 && (
+                          <div className="bg-white rounded-2xl p-6 shadow-md">
+                            <h3 className="text-xl font-bold mb-4 text-gray-900">Включено в ціну</h3>
+                            <ul className="space-y-2">
+                              {selectedAviatur.included.map((item, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-gray-700">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {selectedAviatur.notIncluded && selectedAviatur.notIncluded.length > 0 && (
+                          <div className="bg-white rounded-2xl p-6 shadow-md">
+                            <h3 className="text-xl font-bold mb-4 text-gray-900">Не включено в ціну</h3>
+                            <ul className="space-y-2">
+                              {selectedAviatur.notIncluded.map((item, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <X className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-gray-700">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="prose max-w-none mb-8">
-                      <h3 className="text-gray-900 text-xl font-bold mb-3 border-b border-gray-100 pb-2">Про тур</h3>
-                      <p className="text-gray-700 whitespace-pre-line leading-relaxed">{selectedAviatur.description}</p>
+                    {/* Sidebar */}
+                    <div className="lg:col-span-1">
+                      <div className="bg-white rounded-2xl p-6 shadow-xl sticky top-4">
+                        <div className="text-center mb-6 pb-6 border-b">
+                          <div className="text-4xl font-bold text-primary-600 mb-2">
+                            від €{selectedAviatur.price}
+                          </div>
+                          <p className="text-gray-600">за людину</p>
+                        </div>
 
-                      <h3 className="text-gray-900 text-xl font-bold mt-6 mb-3 border-b border-gray-100 pb-2">Що включено</h3>
-                      <ul className="space-y-2">
-                        {selectedAviatur.included.map((item, index) => (
-                          <li key={index} className="flex items-start text-gray-700">
-                            <Check className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                        <div className="space-y-0 mb-6">
+                          <div className="flex items-center justify-between py-3 border-b">
+                            <span className="text-gray-800 flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              Дати виїзду
+                            </span>
+                            <span className="font-semibold text-gray-900 text-sm">Будь-які (під запит)</span>
+                          </div>
+                          <div className="flex items-center justify-between py-3 border-b">
+                            <span className="text-gray-800 flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Тривалість
+                            </span>
+                            <span className="font-semibold text-gray-900">{selectedAviatur.nights} ночей</span>
+                          </div>
+                          <div className="flex items-center justify-between py-3 border-b">
+                            <span className="text-gray-800 flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              Тип туру
+                            </span>
+                            <span className="font-semibold text-primary-600 text-sm">
+                              {selectedAviatur.isResort ? 'Екскурсійний' : 'Індивідуальний / Груповий'}
+                            </span>
+                          </div>
+                        </div>
 
-                      <h3 className="text-gray-900 text-xl font-bold mt-6 mb-3 border-b border-gray-100 pb-2">Не включено</h3>
-                      <ul className="space-y-2">
-                        {selectedAviatur.notIncluded.map((item, index) => (
-                          <li key={index} className="flex items-start text-gray-700">
-                            <X className="h-5 w-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                        <a
+                          href="https://t.me/tripsforukr_bot"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full block text-center bg-primary-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-700 transition mb-3"
+                        >
+                          Забронювати
+                        </a>
+                        <a
+                          href="https://www.instagram.com/trips_for_ukr?igsh=dnNucTM2cnd1cmgx"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full block text-center border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition"
+                        >
+                          Instagram
+                        </a>
 
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <a
-                        href="https://t.me/tripsforukr_bot"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-primary-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-primary-700 transition flex items-center justify-center shadow-lg hover:shadow-primary-600/20"
-                      >
-                        Забронювати в Telegram
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </a>
-                      <a
-                        href="https://www.instagram.com/trips_for_ukr?igsh=dnNucTM2cnd1cmgx"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 border-2 border-primary-600 text-primary-600 py-4 rounded-xl font-bold text-lg hover:bg-primary-50 transition flex items-center justify-center"
-                      >
-                        Instagram
-                      </a>
+                        <p className="text-sm text-gray-500 text-center mt-4">
+                          Зв'яжемося протягом 24 годин
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
