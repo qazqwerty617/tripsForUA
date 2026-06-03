@@ -113,6 +113,7 @@ export default function AdminTours() {
   const [editingTour, setEditingTour] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
+  const [uploadingIndex, setUploadingIndex] = useState(null)
 
   const handleGenerateAiFancyTitle = async () => {
     if (!formData.country) {
@@ -420,6 +421,7 @@ export default function AdminTours() {
 
   const handleFileUpload = async (file, index) => {
     if (!file) return
+    setUploadingIndex(index)
     try {
       const fd = new FormData()
       fd.append('image', file)
@@ -428,9 +430,11 @@ export default function AdminTours() {
       })
       const url = res?.data?.path || res?.data?.url
       if (url) {
-        const newImages = [...formData.images]
-        newImages[index] = url
-        setFormData({ ...formData, images: newImages })
+        setFormData(prev => {
+          const newImages = [...prev.images]
+          newImages[index] = url
+          return { ...prev, images: newImages }
+        })
         toast.success('Зображення завантажено')
       } else {
         toast.error('Не вдалося отримати URL зображення')
@@ -438,6 +442,8 @@ export default function AdminTours() {
     } catch (e) {
       console.error('Error uploading image:', e)
       toast.error('Помилка завантаження зображення')
+    } finally {
+      setUploadingIndex(null)
     }
   }
 
@@ -837,20 +843,37 @@ export default function AdminTours() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <input
                         type="text"
-                        required={index === 0}
                         value={img}
                         onChange={(e) => updateArrayField('images', index, e.target.value.trim())}
-                        placeholder="https://... або /uploads/xxxxx.jpg"
-                        className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                        placeholder={uploadingIndex === index ? 'Завантаження...' : 'https://... або /uploads/xxxxx.jpg'}
+                        readOnly={uploadingIndex === index}
+                        className={`w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold ${
+                          uploadingIndex === index ? 'opacity-60 cursor-wait' : ''
+                        }`}
                       />
                       <div className="flex gap-2">
-                        <label className="flex-1 cursor-pointer bg-luxury-gold/20 hover:bg-luxury-gold/30 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          Обрати файл
+                        <label className={`flex-1 cursor-pointer bg-luxury-gold/20 hover:bg-luxury-gold/30 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 ${
+                          uploadingIndex === index ? 'opacity-50 pointer-events-none' : ''
+                        }`}>
+                          {uploadingIndex === index ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                              </svg>
+                              Завантаження...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4" />
+                              Обрати файл
+                            </>
+                          )}
                           <input
                             type="file"
                             accept="image/*"
                             className="hidden"
+                            disabled={uploadingIndex !== null}
                             onChange={(e) => handleFileUpload(e.target.files?.[0], index)}
                           />
                         </label>
