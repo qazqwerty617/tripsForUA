@@ -345,7 +345,8 @@ export default function AdminTours() {
       shortDescription: tour.shortDescription,
       price: tour.price,
       originalPrice: tour.originalPrice || '',
-      nights: (() => { const m = (tour.duration || '').match(/(\d+)\s*ніч/); return m ? m[1] : '' })(),
+      days: (() => { const m = (tour.duration || '').match(/^(\d+)/); return m ? m[1] : '' })(),
+      nights: (() => { const m = (tour.duration || '').match(/\/\s*(\d+)/); return m ? m[1] : '' })(),
       duration: tour.duration,
       startDate: format(new Date(tour.startDate), 'yyyy-MM-dd'),
       endDate: format(new Date(tour.endDate), 'yyyy-MM-dd'),
@@ -610,9 +611,9 @@ export default function AdminTours() {
                       />
                       <span className="text-xs text-gray-500 mt-1">ночей</span>
                     </div>
-                    {formData.duration && (
+                    {(formData.days || formData.nights) && (
                       <span className="ml-2 text-luxury-gold font-medium text-sm bg-luxury-gold/10 border border-luxury-gold/30 px-3 py-2 rounded-lg self-center">
-                        {formData.duration}
+                        {formData.days || '?'} днів / {formData.nights || '?'} ночей
                       </span>
                     )}
                   </div>

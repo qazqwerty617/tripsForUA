@@ -545,9 +545,9 @@ export default function AdminAviatury() {
                       />
                       <span className="text-xs text-gray-500 mt-1">ночей</span>
                     </div>
-                    {formData.duration && (
+                    {(formData.days || formData.nights) && (
                       <span className="ml-2 text-luxury-gold font-medium text-sm bg-luxury-gold/10 border border-luxury-gold/30 px-3 py-2 rounded-lg self-center">
-                        {formData.duration}
+                        {formData.days || '?'} днів / {formData.nights || '?'} ночей
                       </span>
                     )}
                   </div>

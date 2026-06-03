@@ -151,6 +151,13 @@ export default function CountryCitySelector({
               setCitySearch(e.target.value)
               setShowCitySuggestions(true)
             }}
+            onBlur={(e) => {
+              // Save custom-typed city even if not selected from dropdown
+              if (e.target.value && onCityChange) {
+                onCityChange(e.target.value)
+              }
+              setTimeout(() => setShowCitySuggestions(false), 150)
+            }}
             onFocus={() => {
               if (selectedCountry) setShowCitySuggestions(true)
             }}
