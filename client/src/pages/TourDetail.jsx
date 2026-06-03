@@ -180,23 +180,6 @@ export default function TourDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Highlights */}
-            {tour.tourType !== 'package' && tour.highlights && tour.highlights.length > 0 && (
-              <div className="bg-luxury-dark-card border border-luxury-gold/15 rounded-2xl p-8 shadow-2xl">
-                <h2 className="text-2xl font-bold font-serif mb-6 text-white border-b border-luxury-gold/10 pb-4">Основні моменти</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tour.highlights.map((highlight, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 bg-luxury-gold/10 border border-luxury-gold/30 rounded-full flex items-center justify-center mt-1">
-                        <Check className="h-3.5 w-3.5 text-luxury-gold" />
-                      </div>
-                      <span className="text-gray-300">{highlight}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Description */}
             <div className="bg-luxury-dark-card border border-luxury-gold/15 rounded-2xl p-8 shadow-2xl">
               <h2 className="text-2xl font-bold font-serif mb-4 text-white border-b border-luxury-gold/10 pb-4">Про подорож</h2>
