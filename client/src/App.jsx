@@ -3,15 +3,18 @@ import { Suspense, lazy } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import ProtectedRoute from './components/ProtectedRoute'
+
 const Home = lazy(() => import('./pages/Home'))
 const TourDetail = lazy(() => import('./pages/TourDetail'))
+const Destinations = lazy(() => import('./pages/Destinations'))
+const DestinationDetail = lazy(() => import('./pages/DestinationDetail'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminTours = lazy(() => import('./pages/admin/AdminTours'))
 const AdminDestinations = lazy(() => import('./pages/admin/AdminDestinations'))
 const AdminAviatury = lazy(() => import('./pages/admin/AdminAviatury'))
 const Admin2FA = lazy(() => import('./pages/admin/Admin2FA'))
-import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -22,8 +25,9 @@ function App() {
         <Suspense fallback={<div className="p-6 text-center">Завантаження...</div>}>
           <Routes>
             <Route path="/" element={<Home />} />
-
             <Route path="/tours/:id" element={<TourDetail />} />
+            <Route path="/destinations" element={<Destinations />} />
+            <Route path="/destinations/:slug" element={<DestinationDetail />} />
 
             {/* Admin Routes */}
             <Route path="/mng-x7k9p2-secure/login" element={<AdminLogin />} />

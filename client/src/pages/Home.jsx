@@ -1,189 +1,54 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Calendar, MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'lucide-react'
+import { MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'lucide-react'
 import api from '../utils/api'
-import { format } from 'date-fns'
-import { uk } from 'date-fns/locale'
 
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Refs for auto-focus
-  const toursDateToRef = useRef(null)
-
   const [tours, setTours] = useState([])
   const [aviatury, setAviatury] = useState([])
-  const [allTours, setAllTours] = useState([]) // Оригінальний список для max дат
-  const [allAviatury, setAllAviatury] = useState([]) // Оригінальний список для max дат
+  const [allTours, setAllTours] = useState([])
+  const [allAviatury, setAllAviatury] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAviatur, setSelectedAviatur] = useState(null)
   const [showAviaturModal, setShowAviaturModal] = useState(false)
   const [showAllAviatury, setShowAllAviatury] = useState(() => searchParams.get('showAllAviatury') === 'true')
-  const [resortFilter, setResortFilter] = useState(() => searchParams.get('resortFilter') || 'all') // 'all' | 'resort' | 'non-resort'
-  const [toursDateFrom, setToursDateFrom] = useState(() => searchParams.get('toursFrom') || '')
-  const [toursDateTo, setToursDateTo] = useState(() => searchParams.get('toursTo') || '')
+  const [resortFilter, setResortFilter] = useState(() => searchParams.get('resortFilter') || 'all')
   const [showAllTours, setShowAllTours] = useState(() => searchParams.get('showAllTours') === 'true')
 
-  // Лічильники для показу результатів в реальному часі
-  const [filteredToursCount, setFilteredToursCount] = useState(0)
-  const [filteredAviaturyCount, setFilteredAviaturyCount] = useState(0)
-
-
-  // Обчислюємо мінімальну та максимальну дату
-  // useMemo для today щоб він був стабільним при рендері, але оновлювався при необхідності
-  const today = useMemo(() => {
-    const now = new Date()
-    now.setHours(0, 0, 0, 0) // Обнуляємо час для точного порівняння дат
-    return now.toISOString().split('T')[0]
-  }, [])
-
-  // useMemo щоб перераховувати тільки коли allTours змінюється
-  const { minTourDate, maxTourDate } = useMemo(() => {
-    if (allTours.length === 0) return { minTourDate: '', maxTourDate: '' }
-    const todayDate = new Date(today)
-    todayDate.setHours(0, 0, 0, 0)
-
-    // Collect all dates from tours (availableDates or startDate)
-    const allDates = []
-    allTours.forEach(t => {
-      if (t.availableDates && t.availableDates.length > 0) {
-        t.availableDates.forEach(d => {
-          const date = new Date(d)
-          if (!isNaN(date.getTime())) {
-            date.setHours(0, 0, 0, 0)
-            if (date >= todayDate) allDates.push(date)
-          }
-        })
-      } else if (t.startDate) {
-        const date = new Date(t.startDate)
-        if (!isNaN(date.getTime())) {
-          date.setHours(0, 0, 0, 0)
-          if (date >= todayDate) allDates.push(date)
-        }
-      }
-    })
-
-    if (allDates.length === 0) return { minTourDate: '', maxTourDate: '' }
-
-    const minDate = new Date(Math.min(...allDates)).toISOString().split('T')[0]
-    const maxDate = new Date(Math.max(...allDates)).toISOString().split('T')[0]
-
-    return { minTourDate: minDate, maxTourDate: maxDate }
-  }, [allTours, today])
-
-
-  // Helper for safe date checking - OPTIMIZED
-  const checkDates = (item, dateFrom, dateTo, isTour = false) => {
-    try {
-      if (!isTour) return true;
-
-      const todayDate = new Date();
-      todayDate.setHours(0, 0, 0, 0);
-
-      // Collect all FUTURE dates from the tour
-      let futureDates = [];
-
-      // Priority 1: Use availableDates if they exist
-      if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
-        futureDates = item.availableDates
-          .map(d => {
-            const date = new Date(d);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })
-          .filter(d => !isNaN(d.getTime()) && d >= todayDate);
-      }
-
-      // Priority 2: Fall back to startDate if no availableDates
-      if (futureDates.length === 0 && item.startDate) {
-        const startDate = new Date(item.startDate);
-        startDate.setHours(0, 0, 0, 0);
-        if (!isNaN(startDate.getTime()) && startDate >= todayDate) {
-          futureDates = [startDate];
-        }
-      }
-
-      // No future dates = tour not available
-      if (futureDates.length === 0) return false;
-
-      // If no filter applied, show all tours with future dates
-      if (!dateFrom && !dateTo) return true;
-
-      // Parse filter dates
-      const fromDate = dateFrom ? new Date(dateFrom) : null;
-      const toDate = dateTo ? new Date(dateTo) : null;
-      if (fromDate) fromDate.setHours(0, 0, 0, 0);
-      if (toDate) toDate.setHours(0, 0, 0, 0);
-
-      // Check if any future date falls within the range
-      return futureDates.some(d => {
-        if (fromDate && toDate) {
-          return d >= fromDate && d <= toDate;
-        } else if (fromDate) {
-          return d >= fromDate;
-        } else if (toDate) {
-          return d <= toDate;
-        }
-        return false;
-      });
-    } catch (e) {
-      console.error('Error filtering dates:', e);
-      return false;
-    }
-  };
-
-  // Підрахувати результати фільтрації на клієнті (без API запиту)
-  const countFilteredResults = (items, dateFrom, dateTo, isTour = false) => {
-    if (!dateFrom && !dateTo) return items.length
-    return items.filter(item => checkDates(item, dateFrom, dateTo, isTour)).length
-  }
-
-
   useEffect(() => {
-    // Завантажити дані при монтуванні компонента
     fetchData()
 
-    // Автоматично оновлювати дані кожні 2 хвилини
-    // Пропускає оновлення якщо є активний фільтр
     const interval = setInterval(() => {
-      // Не оновлюємо якщо є активний фільтр
-      if (!showAllTours && !toursDateFrom && !toursDateTo && resortFilter === 'all') {
+      if (resortFilter === 'all') {
         fetchData()
       }
-    }, 120000) // 2 хвилини
+    }, 120000)
 
-    // Оновити дані коли користувач повертається на сторінку
-    // (наприклад, після зміни туру в адмін-панелі)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Не оновлюємо якщо є активний фільтр
-        if (!showAllTours && !toursDateFrom && !toursDateTo && resortFilter === 'all') {
-          fetchData()
-        }
+        fetchData()
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    // Очистити interval та event listener при демонтуванні
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [showAllTours, toursDateFrom, toursDateTo, resortFilter])
+  }, [resortFilter])
 
-  const fetchData = async (resetFilters = false) => {
+  const fetchData = async () => {
     try {
       const [toursRes, aviaturyRes] = await Promise.all([
         api.get('/tours?status=active'),
         api.get('/aviatury?status=active')
       ])
 
-      const allToursData = toursRes.data
-      const allAviaturyData = aviaturyRes.data
-
-      setAllTours(allToursData)
-      setAllAviatury(allAviaturyData)
+      setAllTours(toursRes.data)
+      setAllAviatury(aviaturyRes.data)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -191,38 +56,26 @@ export default function Home() {
     }
   }
 
-  // Автоматично підраховувати результати для турів в реальному часі
-  useEffect(() => {
-    const count = countFilteredResults(allTours, toursDateFrom, toursDateTo, true)
-    setFilteredToursCount(count)
-  }, [allTours, toursDateFrom, toursDateTo])
-
-  // Видалено useEffect для filteredAviaturyCount - більше не використовується
-
   // Зберігати фільтри в URL
   useEffect(() => {
     const params = new URLSearchParams()
-    if (toursDateFrom) params.set('toursFrom', toursDateFrom)
-    if (toursDateTo) params.set('toursTo', toursDateTo)
     if (showAllTours) params.set('showAllTours', 'true')
     if (resortFilter !== 'all') params.set('resortFilter', resortFilter)
     if (showAllAviatury) params.set('showAllAviatury', 'true')
 
     setSearchParams(params, { replace: true })
-  }, [toursDateFrom, toursDateTo, showAllTours, resortFilter, showAllAviatury, setSearchParams])
+  }, [showAllTours, resortFilter, showAllAviatury, setSearchParams])
 
-  // Auto-apply filters when dates change (Client-side)
+  // Show tours (all or first 6)
   useEffect(() => {
     if (allTours.length > 0) {
-      if (showAllTours || toursDateFrom || toursDateTo) {
-        const filtered = allTours.filter(item => checkDates(item, toursDateFrom, toursDateTo, true))
-        setTours(filtered)
-      } else {
-        setTours(allTours.slice(0, 6))
-      }
+      setTours(showAllTours ? allTours : allTours.slice(0, 6))
+    } else {
+      setTours([])
     }
-  }, [toursDateFrom, toursDateTo, showAllTours, allTours])
+  }, [showAllTours, allTours])
 
+  // Filter aviatury by resort type
   useEffect(() => {
     if (allAviatury.length > 0) {
       let filtered = allAviatury
@@ -232,173 +85,99 @@ export default function Home() {
         filtered = allAviatury.filter(item => item.isResort !== true)
       }
       setAviatury(filtered)
+    } else {
+      setAviatury([])
     }
   }, [resortFilter, allAviatury])
 
   return (
-    <div className="bg-luxury-dark">
+    <div className="bg-[#0f0f0f]">
       {/* Hero Section */}
-      <section className="relative h-[700px] bg-gradient-to-br from-luxury-dark via-luxury-dark-lighter to-black">
-        <div className="absolute inset-0 bg-black opacity-40"></div>
+      <section className="relative h-[700px] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f0f0f] via-[#1a1a1a] to-black"></div>
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: 'url(https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80)',
             backgroundBlendMode: 'overlay',
-            opacity: 0.2
+            opacity: 0.15
           }}
         ></div>
+        {/* Subtle radial accent behind title */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-luxury-gold/5 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="relative h-full flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance text-luxury-gold animate-fade-in" style={{ letterSpacing: '0.02em' }}>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance text-luxury-gold text-glow animate-fade-in" style={{ letterSpacing: '0.02em' }}>
               TRIPS<br />FOR UKRAINE
             </h1>
-            <p className="text-base md:text-xl mb-8 text-gray-300 max-w-2xl animate-slide-up">
-              Унікальний проєкт від нашої команди з добірками ексклюзивних турів та авторських подорожей від провідних туроператорів України в одному місці. Зручно, швидко та вигідно.
+            <p className="text-base md:text-xl mb-8 text-gray-400 max-w-2xl animate-fade-in-up">
+              Унікальний проєкт від нашої команди з добірками ексклюзивних та екскурсійних турів від провідних туроператорів України в одному місці. Зручно, швидко та вигідно.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href="#tours"
-                className="bg-luxury-gold text-luxury-dark px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold-light transition inline-flex items-center justify-center shadow-xl animate-scale-in"
+                className="bg-luxury-gold text-luxury-dark px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold-light hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] transition inline-flex items-center justify-center shadow-xl animate-scale-in"
               >
                 Переглянути тури
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
-              {' '}
               <a
                 href="#contact"
-                className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 backdrop-blur-sm transition inline-flex items-center justify-center animate-scale-in"
+                className="glass border border-luxury-gold/40 text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 transition inline-flex items-center justify-center animate-scale-in"
               >
                 Зв'язок з нами
               </a>
             </div>
           </div>
         </div>
+        {/* Bottom gradient fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0f0f0f] to-transparent"></div>
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-luxury-dark-lighter">
+      <section className="py-20 bg-[#141414]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center animate-fade-in-up delay-100">
-              <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
+            <div className="text-center glass rounded-2xl p-8 animate-fade-in-up delay-100">
+              <div className="bg-luxury-gold/15 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float">
                 <Globe className="h-8 w-8 text-luxury-gold" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-luxury-gold">30+ напрямків</h3>
-              <p className="text-gray-300">Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії</p>
+              <p className="text-gray-400">Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії</p>
             </div>
-            <div className="text-center animate-fade-in-up delay-200">
-              <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '0.5s' }}>
+            <div className="text-center glass rounded-2xl p-8 animate-fade-in-up delay-200">
+              <div className="bg-luxury-gold/15 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '0.5s' }}>
                 <Users className="h-8 w-8 text-luxury-gold" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-luxury-gold">15000+ клієнтів</h3>
-              <p className="text-gray-300">Довіра - наше все. Більше 6 років на ринку, найбільша аудиторія в Україні</p>
+              <p className="text-gray-400">Довіра — наше все. Більше 6 років на ринку, найбільша аудиторія в Україні</p>
             </div>
-            <div className="text-center animate-fade-in-up delay-300">
-              <div className="bg-luxury-gold/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '1s' }}>
+            <div className="text-center glass rounded-2xl p-8 animate-fade-in-up delay-300">
+              <div className="bg-luxury-gold/15 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '1s' }}>
                 <Star className="h-8 w-8 text-luxury-gold" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-luxury-gold">98% позитивних відгуків</h3>
-              <p className="text-gray-300">Кожен відгук унікальний, а емоції від туру - незабутні</p>
+              <p className="text-gray-400">Кожен відгук унікальний, а емоції від туру — незабутні</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Авторські подорожі */}
+      {/* Екскурсійні тури */}
       <section className="py-20 bg-luxury-dark-lighter" id="tours">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Авторські подорожі</h2>
-            <p className="text-xl text-gray-300">Обирай подорож мрії вже сьогодні</p>
+            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Екскурсійні тури</h2>
+            <p className="text-xl text-gray-400">Обирай подорож мрії — під будь-які зручні дати</p>
           </div>
 
-          {/* Фільтр за датами вильоту */}
-          <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
-            <p className="text-sm text-gray-400 mb-3">✈️ Оберіть період, коли хочете вилетіти</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative z-30">
-              <div className="md:col-span-1 relative">
-                <label className="block text-sm text-gray-300 mb-2">Виліт з</label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={toursDateFrom}
-                    onChange={(e) => {
-                      const newDateFrom = e.target.value
-                      setToursDateFrom(newDateFrom)
-                      // Auto-clear "To" if it's earlier than "From"
-                      if (toursDateTo && newDateFrom && new Date(newDateFrom) > new Date(toursDateTo)) {
-                        setToursDateTo('')
-                      }
-                      // Auto-focus second date picker
-                      if (newDateFrom && toursDateToRef.current) {
-                        setTimeout(() => {
-                          toursDateToRef.current.focus()
-                          toursDateToRef.current.showPicker?.()
-                        }, 150)
-                      }
-                    }}
-                    onClick={(e) => e.target.showPicker?.()}
-                    min={minTourDate || today}
-                    max={toursDateTo || maxTourDate}
-                    lang="uk"
-                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
-                  />
-                  {toursDateFrom && (
-                    <button
-                      onClick={() => setToursDateFrom('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="md:col-span-1 relative">
-                <label className="block text-sm text-gray-300 mb-2">Виліт до</label>
-                <div className="relative">
-                  <input
-                    ref={toursDateToRef}
-                    type="date"
-                    value={toursDateTo}
-                    onChange={(e) => {
-                      const newDateTo = e.target.value
-                      setToursDateTo(newDateTo)
-                      // Auto-apply filter after selecting second date
-                      if (newDateTo && toursDateFrom) {
-                        setShowAllTours(true)
-                      }
-                    }}
-                    onClick={(e) => !e.target.disabled && e.target.showPicker?.()}
-                    min={toursDateFrom || minTourDate || today}
-                    max={maxTourDate}
-                    lang="uk"
-                    className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
-                    disabled={!toursDateFrom}
-                  />
-                  {toursDateTo && (
-                    <button
-                      onClick={() => setToursDateTo('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="md:col-span-2 flex gap-3">
-                <button onClick={() => setShowAllTours(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
-                <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
-              </div>
+          {tours.length === 0 && !loading && (
+            <div className="text-center py-16 glass rounded-2xl mb-8">
+              <div className="text-5xl mb-4">✈️</div>
+              <p className="text-gray-400 text-lg">Наразі немає доступних екскурсійних турів</p>
+              <p className="text-gray-500 text-sm mt-2">Слідкуйте за оновленнями — нові тури з'являться скоро!</p>
             </div>
-
-            {(toursDateFrom || toursDateTo) && (
-              <p className="text-sm text-gray-400 mt-3">
-                Знайдено: <span className="text-luxury-gold font-semibold">{filteredToursCount}</span> {filteredToursCount === 1 ? 'тур' : filteredToursCount < 5 ? 'тури' : 'турів'}
-              </p>
-            )}
-          </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {(showAllTours ? tours : tours.slice(0, 6)).map((tour, index) => (
@@ -411,7 +190,7 @@ export default function Home() {
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
                   <div className="absolute top-4 right-4 bg-luxury-gold text-luxury-dark px-3 py-1 rounded-full text-sm font-semibold">
-                    {tour.duration} днів
+                    {tour.duration}
                   </div>
                 </div>
                 <div className="p-6">
@@ -477,7 +256,7 @@ export default function Home() {
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                🏖️ Курорти
+                🏛️ Екскурсійні
               </button>
               <button
                 onClick={() => setResortFilter('non-resort')}
@@ -486,15 +265,23 @@ export default function Home() {
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                🏛️ Не курорти
+                ✈️ Стандартні
               </button>
             </div>
             {resortFilter !== 'all' && (
               <p className="text-sm text-gray-400 mt-3 text-center">
-                Знайдено: <span className="text-luxury-gold font-semibold">{aviatury.length}</span> {aviatury.length === 1 ? 'тур' : aviatury.length < 5 ? 'тури' : 'турів'}
+                Знайдено: <span className="text-luxury-gold font-semibold">{aviatury.length}</span> {aviatury.length === 0 ? 'турів' : aviatury.length === 1 ? 'тур' : aviatury.length < 5 ? 'тури' : 'турів'}
               </p>
             )}
           </div>
+
+          {aviatury.length === 0 && !loading && (
+            <div className="text-center py-16 glass rounded-2xl mb-8">
+              <div className="text-5xl mb-4">🌴</div>
+              <p className="text-gray-400 text-lg">Наразі немає доступних індивідуальних турів</p>
+              <p className="text-gray-500 text-sm mt-2">Нові пропозиції додаються регулярно</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {(showAllAviatury ? aviatury : aviatury.slice(0, 12)).map((aviatur, index) => (
@@ -544,9 +331,13 @@ export default function Home() {
                     <div className="text-xl font-bold text-luxury-gold shrink-0">
                       від €{aviatur.price}
                     </div>
-                    {aviatur.isResort && (
-                      <div className="text-sm text-blue-400">🏖️ Курорт</div>
-                    )}
+                    <div className="text-sm">
+                      {aviatur.isResort ? (
+                        <span className="text-luxury-gold">🏛️ Екскурсійний</span>
+                      ) : (
+                        <span className="text-gray-400">✈️ Стандартний</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </button>
@@ -578,7 +369,7 @@ export default function Home() {
                     <Star className="h-6 w-6 text-luxury-gold" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Авторські маршрути</h3>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Екскурсійні маршрути</h3>
                     <p className="text-gray-300">
                       Кожен тур розроблений досвідченими гідами
                     </p>
@@ -711,12 +502,12 @@ export default function Home() {
                         <span className="text-gray-400 text-sm block">Ціна</span>
                         <span className="text-luxury-gold font-semibold">від €{selectedAviatur.price}</span>
                       </div>
-                      {selectedAviatur.isResort && (
-                        <div className="bg-luxury-dark px-4 py-2 rounded-lg border border-blue-500/30">
-                          <span className="text-gray-400 text-sm block">Тип</span>
-                          <span className="text-blue-400 font-semibold">🏖️ Курорт</span>
-                        </div>
-                      )}
+                      <div className="bg-luxury-dark px-4 py-2 rounded-lg border border-luxury-gold/30">
+                        <span className="text-gray-400 text-sm block">Категорія</span>
+                        <span className="text-luxury-gold font-semibold">
+                          {selectedAviatur.isResort ? '🏛️ Екскурсійний' : '✈️ Стандартний'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="prose prose-invert max-w-none mb-8">

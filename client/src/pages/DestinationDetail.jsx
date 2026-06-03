@@ -136,13 +136,11 @@ export default function DestinationDetail() {
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        <span>
-                          {format(new Date(tour.startDate), 'd MMM', { locale: uk })}
-                        </span>
+                        <span>Дати під запит</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        <span>{tour.availableSpots} місць</span>
+                        <span>Індивідуально</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t">

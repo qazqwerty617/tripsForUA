@@ -2,18 +2,19 @@
   "name": "trips-for-ua",
   "version": "1.0.0",
   "description": "Tour booking website with admin panel",
-  "main": "server/index.js",
+  "main": "server_go/main.go",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server/index.js",
+    "server": "cd server_go && go run .",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
+    "build:seo": "node client/scripts/get-routes.js && cd client && npm run build",
     "build:client": "cd client && npm install && npm run build",
-    "build:all": "npm install && cd server && npm install && cd ../client && npm install && npm run build",
-    "start": "node server/index.js",
-    "start:prod": "NODE_ENV=production node server/index.js",
-    "seed": "node server/seed.js",
-    "seed:aviatury": "node server/seedAviatury.js"
+    "build:all": "npm install && cd server_go && go build && cd ../client && npm install && npm run build",
+    "start": "cd server_go && go run .",
+    "start:prod": "cd server_go && go run .",
+    "seed": "node server_node_backup/seed.js",
+    "seed:aviatury": "node server_node_backup/seedAviatury.js"
   },
   "keywords": [
     "tours",

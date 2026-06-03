@@ -119,8 +119,7 @@ export default function TourDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>{tour.title} | Trips for Ukraine</title>
-        <meta name="description" content={tour.description?.slice(0, 160) || 'Авторський тур від Trips for Ukraine'} />
+        <meta name="description" content={tour.description?.slice(0, 160) || 'Екскурсійний тур від Trips for Ukraine'} />
 
         {/* Open Graph */}
         <meta property="og:title" content={tour.title} />
@@ -160,9 +159,7 @@ export default function TourDetail() {
             <div className="flex flex-wrap gap-6 text-lg">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                <span>
-                  {formatDate(tour.startDate)} - {formatDate(tour.endDate, 'd MMM yyyy')}
-                </span>
+                <span>Будь-які дати (під запит)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
@@ -170,7 +167,7 @@ export default function TourDetail() {
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                <span>{tour.availableSpots} вільних місць</span>
+                <span>Індивідуальний підбір</span>
               </div>
             </div>
           </div>
@@ -314,45 +311,15 @@ export default function TourDetail() {
               </div>
 
               <div className="space-y-4 mb-6">
-                {/* Date Selection */}
-                {tour.availableDates && tour.availableDates.length > 1 ? (
-                  <div className="py-3 border-b">
-                    <span className="text-gray-800 flex items-center gap-2 mb-3">
-                      <Calendar className="h-4 w-4" />
-                      Оберіть дату виїзду
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {tour.availableDates
-                        .sort((a, b) => new Date(a) - new Date(b))
-                        .map((date, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            onClick={() => {
-                              setSelectedDate(date)
-                              setFormData(prev => ({ ...prev, selectedDate: date }))
-                            }}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${selectedDate === date
-                              ? 'bg-primary-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                          >
-                            {formatDate(date)}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between py-3 border-b">
-                    <span className="text-gray-800 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Початок
-                    </span>
-                    <span className="font-semibold text-gray-900">
-                      {formatDate(tour.availableDates?.[0] || tour.startDate, 'd MMM yyyy')}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between py-3 border-b">
+                  <span className="text-gray-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Дати виїзду
+                  </span>
+                  <span className="font-semibold text-gray-900">
+                    Будь-які (під запит)
+                  </span>
+                </div>
                 <div className="flex items-center justify-between py-3 border-b">
                   <span className="text-gray-800 flex items-center gap-2">
                     <Clock className="h-4 w-4" />
@@ -363,10 +330,10 @@ export default function TourDetail() {
                 <div className="flex items-center justify-between py-3 border-b">
                   <span className="text-gray-800 flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    Вільні місця
+                    Тип туру
                   </span>
                   <span className="font-semibold text-primary-600">
-                    {tour.availableSpots} / {tour.maxParticipants}
+                    Індивідуальний / Груповий
                   </span>
                 </div>
               </div>

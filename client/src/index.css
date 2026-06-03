@@ -4,10 +4,12 @@
 
 @layer base {
   body {
-    background-color: #1a1a1a;
+    background-color: #0f0f0f;
     color: #f3f4f6;
     font-family: Inter, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -23,21 +25,21 @@ html {
 }
 
 /* Custom scrollbar with luxury theme */
-.custom-scrollbar::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(26, 26, 26, 0.3);
+::-webkit-scrollbar-track {
+  background: rgba(15, 15, 15, 0.5);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
   border-radius: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
 }
 
 /* ===== ANIMATIONS ===== */
@@ -130,6 +132,16 @@ html {
   }
 }
 
+/* Subtle gradient shift */
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
 /* ===== ANIMATION CLASSES ===== */
 
 .animate-fade-in {
@@ -158,6 +170,11 @@ html {
 
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite;
 }
 
 /* Delay classes for staggered animations */
@@ -190,8 +207,8 @@ button, a, .card, .hover-lift {
 
 /* Hover lift effect */
 .hover-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 175, 55, 0.08);
 }
 
 /* Hover brightness */
@@ -209,4 +226,29 @@ img {
 /* Prevent animation on page load for all elements */
 .no-animate {
   animation: none !important;
+}
+
+/* ===== GLASS MORPHISM ===== */
+.glass {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.glass-light {
+  background: rgba(212, 175, 55, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ===== SUBTLE TEXT GLOW ===== */
+.text-glow {
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background-color: rgba(212, 175, 55, 0.3);
+  color: #fff;
 }

@@ -70,14 +70,8 @@ export default function AdminDashboard() {
       })
       setExpiringAviatury(expAviatury)
 
-      // Filter expiring tours
-      const expTours = toursRes.data.filter(t => {
-        if (!t.startDate) return false
-        const date = new Date(t.startDate)
-        date.setHours(0, 0, 0, 0)
-        return date >= today && date <= threeDaysFromNow
-      })
-      setExpiringTours(expTours)
+      // Filter expiring tours (tours are now on-demand, so they don't expire)
+      setExpiringTours([])
 
     } catch (error) {
       console.error('Error fetching stats:', error)
@@ -227,7 +221,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-gray-400 text-sm font-medium">Спливають (Авторські)</p>
+                <p className="text-gray-400 text-sm font-medium">Спливають (Екскурсійні)</p>
                 <p className="text-3xl font-bold text-red-500 mt-2">{expiringTours.length}</p>
               </div>
               <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center group-hover:bg-red-900/40 transition">
@@ -266,7 +260,7 @@ export default function AdminDashboard() {
           >
             <Package className="h-12 w-12 text-luxury-gold mb-4" />
             <h3 className="text-xl font-bold mb-2 text-gray-100 group-hover:text-luxury-gold transition">
-              Авторські подорожі
+              Екскурсійні тури
             </h3>
             <p className="text-gray-300">
               Додавайте, редагуйте та видаляйте тури
@@ -311,7 +305,7 @@ export default function AdminDashboard() {
           <div className="bg-luxury-dark-card w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl border border-luxury-gold/20 relative animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-luxury-gold/10 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-luxury-gold">
-                {activeModal === 'tours' ? 'Авторські подорожі, що спливають' : 'Авіатури, що спливають'}
+                {activeModal === 'tours' ? 'Екскурсійні тури, що спливають' : 'Авіатури, що спливають'}
               </h2>
               <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-white transition">
                 ✕
@@ -399,7 +393,7 @@ export default function AdminDashboard() {
                   <p className="text-2xl font-bold text-emerald-500">{analyticsData?.totalViews || 0}</p>
                 </div>
                 <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
-                  <p className="text-gray-400 text-sm">Авторські подорожі</p>
+                  <p className="text-gray-400 text-sm">Екскурсійні тури</p>
                   <p className="text-2xl font-bold text-blue-500">{analyticsData?.viewsByType?.Tour || 0}</p>
                 </div>
                 <div className="bg-luxury-dark p-4 rounded-lg border border-luxury-gold/10">
@@ -501,7 +495,7 @@ export default function AdminDashboard() {
                               <tr key={index} className="hover:bg-luxury-dark-lighter transition">
                                 <td className="px-4 py-2 text-gray-100 font-medium">{item._id.sourceName || 'Загальне'}</td>
                                 <td className="px-4 py-2 text-gray-400">
-                                  {item._id.sourceType === 'Tour' ? '📦 Авторські' : item._id.sourceType === 'Aviatur' ? '✈️ Індивід.' : '🏠 Загальне'}
+                                  {item._id.sourceType === 'Tour' ? '📦 Екскурсійні' : item._id.sourceType === 'Aviatur' ? '✈️ Індивід.' : '🏠 Загальне'}
                                 </td>
                                 <td className="px-4 py-2">
                                   <span className={`px-2 py-1 rounded text-xs font-bold ${item._id.platform === 'telegram' ? 'bg-blue-900/30 text-blue-400' : 'bg-pink-900/30 text-pink-400'}`}>
@@ -541,7 +535,7 @@ export default function AdminDashboard() {
 
               {/* Tours Table */}
               <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-200 mb-4">📦 Авторські подорожі</h3>
+                <h3 className="text-lg font-semibold text-gray-200 mb-4">📦 Екскурсійні тури</h3>
                 <div className="bg-luxury-dark rounded-lg border border-luxury-gold/10 overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-luxury-dark-lighter">
