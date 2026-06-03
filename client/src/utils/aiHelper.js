@@ -293,3 +293,65 @@ export async function generateAiAviaturyDescription(country, name) {
 
   return fallback;
 }
+
+export function generateAiImage(country, cityOrHotel) {
+  const translationMap = {
+    'італія': 'Italy', 'рим': 'Rome', 'венеція': 'Venice', 'флоренція': 'Florence', 'амальфі': 'Amalfi', 'позітано': 'Positano',
+    'греція': 'Greece', 'афіни': 'Athens', 'санторіні': 'Santorini', 'крит': 'Crete', 'міконос': 'Mykonos',
+    'іспанія': 'Spain', 'барселона': 'Barcelona', 'мадрид': 'Madrid', 'мальорка': 'Mallorca', 'ібіца': 'Ibiza',
+    'франція': 'France', 'париж': 'Paris', 'ніцца': 'Nice', 'канни': 'Cannes', 'прованс': 'Provence',
+    'туреччина': 'Turkey', 'стамбул': 'Istanbul', 'каппадокія': 'Cappadocia', 'анталія': 'Antalya', 'бодрум': 'Bodrum',
+    'єгипет': 'Egypt', 'хургада': 'Hurghada', 'шарм': 'Sharm el Sheikh', 'каїр': 'Cairo',
+    'мальдіви': 'Maldives', 'балі': 'Bali', 'таїланд': 'Thailand', 'пхукет': 'Phuket', 'бангкок': 'Bangkok',
+    'ісландія': 'Iceland', 'рейк\'явік': 'Reykjavik', 'норвегія': 'Norway', 'німеччина': 'Germany', 'баварія': 'Bavaria',
+    'австрія': 'Austria', 'відень': 'Vienna', 'швейцарія': 'Switzerland', 'оае': 'UAE', 'дубай': 'Dubai'
+  };
+
+  const translate = (text) => {
+    if (!text) return '';
+    const clean = text.toLowerCase().trim();
+    return translationMap[clean] || text;
+  };
+
+  const engCountry = translate(country);
+  const engCity = translate(cityOrHotel);
+
+  // Mapped direct Unsplash premium photos for instant gorgeous results!
+  const unsplashMap = {
+    'rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
+    'venice': 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=1200&q=80',
+    'florence': 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1200&q=80',
+    'amalfi': 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
+    'positano': 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=1200&q=80',
+    'italy': 'https://images.unsplash.com/photo-1498503182468-3b51cbb6cb24?w=1200&q=80',
+    'athens': 'https://images.unsplash.com/photo-1603565816030-6b389eeb23cb?w=1200&q=80',
+    'santorini': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1200&q=80',
+    'crete': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
+    'greece': 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1200&q=80',
+    'barcelona': 'https://images.unsplash.com/photo-1583779457094-0e34a99e91b3?w=1200&q=80',
+    'madrid': 'https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200&q=80',
+    'spain': 'https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=1200&q=80',
+    'paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
+    'france': 'https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?w=1200&q=80',
+    'istanbul': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1200&q=80',
+    'cappadocia': 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?w=1200&q=80',
+    'turkey': 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=1200&q=80',
+    'maldives': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+    'bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
+    'thailand': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80',
+    'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
+    'uae': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80',
+    'switzerland': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80'
+  };
+
+  const cleanCity = engCity.toLowerCase().trim();
+  const cleanCountry = engCountry.toLowerCase().trim();
+
+  if (unsplashMap[cleanCity]) return unsplashMap[cleanCity];
+  if (unsplashMap[cleanCountry]) return unsplashMap[cleanCountry];
+
+  // Dynamic generated high quality aesthetic travel photo
+  const queryStr = `${engCity || ''} ${engCountry || ''} travel resort luxury vacation sunny aesthetic pinterest style`.trim();
+  const seed = Math.floor(Math.random() * 1000000);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(queryStr)}?width=1200&height=800&nologo=true&seed=${seed}`;
+}

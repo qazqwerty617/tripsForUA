@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
-import { generateAiTitle, generateAiAviaturyDescription } from '../../utils/aiHelper'
+import { generateAiTitle, generateAiAviaturyDescription, generateAiImage } from '../../utils/aiHelper'
 import CountryCitySelector from '../../components/CountryCitySelector'
 import {
   DndContext,
@@ -162,6 +162,25 @@ export default function AdminAviatury() {
       toast.error('Помилка генерації опису')
     } finally {
       setGeneratingAiDesc(false)
+    }
+  }
+
+  const [generatingAiImageState, setGeneratingAiImageState] = useState(false)
+
+  const handleGenerateAiImageClick = async () => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiImageState(true)
+    try {
+      const imgUrl = generateAiImage(formData.country, formData.name || '')
+      setFormData(prev => ({ ...prev, image: imgUrl }))
+      toast.success('AI підібрав найкраще фото!')
+    } catch (error) {
+      toast.error('Помилка підбору фото')
+    } finally {
+      setGeneratingAiImageState(false)
     }
   }
 
@@ -610,12 +629,12 @@ export default function AdminAviatury() {
                     }`}
                   />
                   <div className="flex gap-2">
-                    <label className={`flex-1 cursor-pointer bg-luxury-gold/20 hover:bg-luxury-gold/30 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 ${
+                    <label className={`flex-1 cursor-pointer bg-luxury-gold/10 hover:bg-luxury-gold/20 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 transition-all ${
                       uploadingImage ? 'opacity-50 pointer-events-none' : ''
                     }`}>
                       {uploadingImage ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin h-4 w-4 text-luxury-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                           </svg>
@@ -623,7 +642,7 @@ export default function AdminAviatury() {
                         </>
                       ) : (
                         <>
-                          <Upload className="h-4 w-4" />
+                          <Upload className="h-4 w-4 text-luxury-gold" />
                           Обрати файл
                         </>
                       )}
@@ -635,6 +654,14 @@ export default function AdminAviatury() {
                         onChange={(e) => handleFileUpload(e.target.files?.[0])}
                       />
                     </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiImageClick}
+                      disabled={generatingAiImageState}
+                      className="px-4 py-2 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-lg shadow-luxury-gold/10"
+                    >
+                      {generatingAiImageState ? 'Генерація...' : '✨ AI Фото'}
+                    </button>
                   </div>
                 </div>
                 {formData.image && (

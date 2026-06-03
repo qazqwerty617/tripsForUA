@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import CountryCitySelector from '../../components/CountryCitySelector'
 import { countriesData } from '../../utils/countriesData'
-import { generateAiTitle, generateAiTourDescription } from '../../utils/aiHelper'
+import { generateAiTitle, generateAiTourDescription, generateAiImage } from '../../utils/aiHelper'
 import {
   DndContext,
   closestCenter,
@@ -152,6 +152,25 @@ export default function AdminTours() {
       toast.error('Помилка генерації опису')
     } finally {
       setGeneratingAiDesc(false)
+    }
+  }
+
+  const [generatingAiImageState, setGeneratingAiImageState] = useState(false)
+
+  const handleGenerateAiImageClick = async (index) => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiImageState(true)
+    try {
+      const imgUrl = generateAiImage(formData.country, formData.city || formData.fancyTitle || '')
+      updateArrayField('images', index, imgUrl)
+      toast.success('AI підібрав найкраще фото!')
+    } catch (error) {
+      toast.error('Помилка підбору фото')
+    } finally {
+      setGeneratingAiImageState(false)
     }
   }
   const [formData, setFormData] = useState({
@@ -852,12 +871,12 @@ export default function AdminTours() {
                         }`}
                       />
                       <div className="flex gap-2">
-                        <label className={`flex-1 cursor-pointer bg-luxury-gold/20 hover:bg-luxury-gold/30 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 ${
+                        <label className={`flex-1 cursor-pointer bg-luxury-gold/10 hover:bg-luxury-gold/20 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 transition-all ${
                           uploadingIndex === index ? 'opacity-50 pointer-events-none' : ''
                         }`}>
                           {uploadingIndex === index ? (
                             <>
-                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <svg className="animate-spin h-4 w-4 text-luxury-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                               </svg>
@@ -865,7 +884,7 @@ export default function AdminTours() {
                             </>
                           ) : (
                             <>
-                              <Upload className="h-4 w-4" />
+                              <Upload className="h-4 w-4 text-luxury-gold" />
                               Обрати файл
                             </>
                           )}
@@ -877,6 +896,14 @@ export default function AdminTours() {
                             onChange={(e) => handleFileUpload(e.target.files?.[0], index)}
                           />
                         </label>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateAiImageClick(index)}
+                          disabled={generatingAiImageState}
+                          className="px-3 py-2 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 font-bold rounded-lg flex items-center gap-1 transition-all shadow-lg shadow-luxury-gold/10 text-xs"
+                        >
+                          {generatingAiImageState ? '...' : '✨ AI Фото'}
+                        </button>
                         {formData.images.length > 1 && (
                           <button
                             type="button"
@@ -913,35 +940,37 @@ export default function AdminTours() {
                 </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Основні моменти</label>
-                {formData.highlights.map((highlight, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={highlight}
-                      onChange={(e) => updateArrayField('highlights', index, e.target.value)}
-                      className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                    />
-                    {formData.highlights.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayField('highlights', index)}
-                        className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayField('highlights')}
-                  className="text-sm text-luxury-gold hover:text-luxury-gold-light"
-                >
-                  + Додати момент
-                </button>
-              </div>
+              {formData.tourType === 'package' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Основні моменти</label>
+                  {formData.highlights.map((highlight, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={highlight}
+                        onChange={(e) => updateArrayField('highlights', index, e.target.value)}
+                        className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                      />
+                      {formData.highlights.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeArrayField('highlights', index)}
+                          className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addArrayField('highlights')}
+                    className="text-sm text-luxury-gold hover:text-luxury-gold-light"
+                  >
+                    + Додати момент
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
