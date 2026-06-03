@@ -202,9 +202,9 @@ export default function Home() {
                   <p className="text-gray-400 mb-4 line-clamp-2">{tour.description}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold text-luxury-gold">€{tour.price}</div>
+                      <div className="text-2xl font-bold text-luxury-gold">від €{tour.price}</div>
                       {tour.originalPrice && (
-                        <div className="text-lg text-gray-500 line-through">€{tour.originalPrice}</div>
+                        <div className="text-lg text-gray-500 line-through">від €{tour.originalPrice}</div>
                       )}
                     </div>
                     <span className="text-luxury-gold flex items-center text-sm font-semibold group-hover:translate-x-1 transition">

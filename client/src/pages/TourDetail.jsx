@@ -179,7 +179,7 @@ export default function TourDetail() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Highlights */}
-            {tour.highlights && tour.highlights.length > 0 && (
+            {tour.tourType !== 'package' && tour.highlights && tour.highlights.length > 0 && (
               <div className="bg-white rounded-2xl p-8 shadow-md">
                 <h2 className="text-3xl font-bold mb-6 text-gray-900">Основні моменти</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,11 +301,11 @@ export default function TourDetail() {
               <div className="text-center mb-6 pb-6 border-b">
                 {tour.originalPrice && tour.originalPrice > tour.price && (
                   <div className="text-xl text-gray-400 line-through mb-1">
-                    €{tour.originalPrice}
+                    від €{tour.originalPrice}
                   </div>
                 )}
                 <div className="text-4xl font-bold text-primary-600 mb-2">
-                  €{tour.price}
+                  від €{tour.price}
                 </div>
                 <p className="text-gray-600">за людину</p>
               </div>
@@ -358,125 +358,30 @@ export default function TourDetail() {
 
             {/* Booking Flow */}
             {showBookingForm && (
-              tour.tourType === 'exclusive' ? (
-                <div className="bg-white rounded-2xl p-6 shadow-xl mt-6">
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">Обрати спосіб бронювання</h3>
-                  <p className="text-gray-600 mb-6">Напишіть нам у зручному для вас месенджері.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a
-                      href="https://t.me/tripsforukr_bot"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition shadow-lg"
-                    >
-                      Написати в Telegram
-                    </a>
-                    <a
-                      href="https://www.instagram.com/trips_for_ukr/?igsh=dnNucTM2cnd1cmgx"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition shadow-lg"
-                    >
-                      Написати в Instagram
-                    </a>
-                  </div>
+              <div className="bg-white rounded-2xl p-6 shadow-xl mt-6">
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">Обрати спосіб бронювання</h3>
+                <p className="text-gray-600 mb-6">Напишіть нам у зручному для вас месенджері.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <a
+                    href={tour.contactTelegram ? (tour.contactTelegram.startsWith('http') ? tour.contactTelegram : `https://t.me/${tour.contactTelegram.replace('@', '')}`) : "https://t.me/tripsforukr_bot"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition shadow-lg"
+                    onClick={() => api.trackSocialClick('telegram', { type: 'Tour', id: tour._id, name: tour.title }).catch(() => { })}
+                  >
+                    Написати в Telegram
+                  </a>
+                  <a
+                    href={tour.contactInstagram ? (tour.contactInstagram.startsWith('http') ? tour.contactInstagram : `https://instagram.com/${tour.contactInstagram.replace('@', '')}`) : "https://www.instagram.com/trips_for_ukr/?igsh=dnNucTM2cnd1cmgx"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition shadow-lg"
+                    onClick={() => api.trackSocialClick('instagram', { type: 'Tour', id: tour._id, name: tour.title }).catch(() => { })}
+                  >
+                    Написати в Instagram
+                  </a>
                 </div>
-              ) : (
-                <div className="bg-white rounded-2xl p-6 shadow-xl mt-6">
-                  <h3 className="text-2xl font-bold mb-6">Форма бронювання</h3>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ваше ім'я *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.customerName}
-                        onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.customerEmail}
-                        onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Телефон *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={formData.customerPhone}
-                        onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Кількість осіб *
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max={tour.availableSpots}
-                        required
-                        value={formData.numberOfPeople}
-                        onChange={(e) => setFormData({ ...formData, numberOfPeople: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Коментар (необов'язково)
-                      </label>
-                      <textarea
-                        rows="3"
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-600">Ціна за особу:</span>
-                        <span className="font-semibold">€{tour.price}</span>
-                      </div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-600">Кількість осіб:</span>
-                        <span className="font-semibold">{formData.numberOfPeople}</span>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t">
-                        <span className="font-semibold">Загальна сума:</span>
-                        <span className="text-2xl font-bold text-primary-600">
-                          €{tour.price * formData.numberOfPeople}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition"
-                    >
-                      Підтвердити бронювання
-                    </button>
-                  </form>
-                </div>
-              )
+              </div>
             )}
           </div>
         </div>

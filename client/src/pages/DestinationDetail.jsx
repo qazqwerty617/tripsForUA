@@ -145,7 +145,7 @@ export default function DestinationDetail() {
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t">
                       <span className="text-2xl font-bold text-primary-600">
-                        €{tour.price}
+                        від €{tour.price}
                       </span>
                       <span className="text-primary-600 font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
                         Детальніше
