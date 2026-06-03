@@ -108,6 +108,8 @@ export default function AdminAviatury() {
   const [searchQuery, setSearchQuery] = useState('')
   const [countrySuggestions, setCountrySuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [nameSuggestions, setNameSuggestions] = useState([])
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false)
   const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
 
   const handleGenerateAiTitle = async () => {
@@ -151,10 +153,72 @@ export default function AdminAviatury() {
   useEffect(() => {
     const handleOutsideClick = () => {
       setShowSuggestions(false)
+      setShowNameSuggestions(false)
     }
     document.addEventListener('click', handleOutsideClick)
     return () => document.removeEventListener('click', handleOutsideClick)
   }, [])
+
+  const handleNameInputChange = (val) => {
+    setFormData(prev => ({ ...prev, name: val }))
+    
+    let list = []
+    if (formData.country) {
+      const matchedCountry = countriesData.find(c => c.nameUk === formData.country)
+      if (matchedCountry && matchedCountry.cities) {
+        list = matchedCountry.cities
+      }
+    } else {
+      list = ["Шарм-ель-Шейх", "Анталія", "Крит", "Хургада", "Барселона", "Аліканте", "Тенеріфе", "Ніцца", "Рим", "Париж", "Балі", "Мальдіви", "Бодрум", "Мармарис", "Коломия", "Афіни", "Будапешт", "Відень", "Прага", "Венеція"]
+    }
+
+    if (val.trim().length >= 1) {
+      const query = val.toLowerCase()
+      const matches = list.filter(city => city.toLowerCase().includes(query)).slice(0, 8)
+      setNameSuggestions(matches)
+      setShowNameSuggestions(true)
+    } else {
+      setNameSuggestions(list.slice(0, 8))
+      setShowNameSuggestions(true)
+    }
+  }
+
+  const handleSelectName = (cityName, e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
+    let detectedCountry = formData.country
+    let detectedFlag = formData.flag
+
+    if (!detectedCountry) {
+      const countryObj = countriesData.find(c => c.cities && c.cities.includes(cityName))
+      if (countryObj) {
+        detectedCountry = countryObj.nameUk
+        detectedFlag = countryObj.flag
+      }
+    }
+
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        name: cityName,
+        country: detectedCountry,
+        flag: detectedFlag
+      }
+      if (detectedCountry && !updated.title) {
+        updated.title = `${detectedFlag || '✈️'} Подорож в ${cityName} (${detectedCountry})`
+      }
+      return updated
+    })
+
+    setNameSuggestions([])
+    setShowNameSuggestions(false)
+    if (detectedCountry && detectedCountry !== formData.country) {
+      toast.success(`Виявлено країну: ${detectedCountry} ${detectedFlag}`)
+    }
+  }
 
   const handleCountryInputChange = (val) => {
     setFormData(prev => ({ ...prev, country: val }))
@@ -456,16 +520,41 @@ export default function AdminAviatury() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
+                <div className="relative">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва (місто/курорт/готель) *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => handleNameInputChange(e.target.value)}
+                    onFocus={() => {
+                      handleNameInputChange(formData.name)
+                    }}
                     placeholder="Крит"
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
+                  {showNameSuggestions && nameSuggestions.length > 0 && (
+                    <div 
+                      className="absolute z-50 w-full mt-1 bg-luxury-dark border border-luxury-gold/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto divide-y divide-luxury-gold/10 backdrop-blur-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {nameSuggestions.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={(e) => handleSelectName(item, e)}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-luxury-gold hover:text-luxury-dark transition flex justify-between items-center"
+                        >
+                          <span>{item}</span>
+                          {!formData.country && (
+                            <span className="text-xs opacity-75">
+                              {countriesData.find(c => c.cities && c.cities.includes(item))?.nameUk}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="relative">
@@ -688,13 +777,44 @@ export default function AdminAviatury() {
                     </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('included')}
-                  className="text-luxury-gold hover:text-luxury-gold-light text-sm"
-                >
-                  + Додати пункт
-                </button>
+                <div className="flex justify-between items-center mt-1">
+                  <button
+                    type="button"
+                    onClick={() => addArrayItem('included')}
+                    className="text-luxury-gold hover:text-luxury-gold-light text-sm"
+                  >
+                    + Додати пункт
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 p-2 bg-luxury-dark-lighter/50 rounded-lg border border-luxury-gold/10">
+                  <span className="text-xs text-gray-400 mr-1">Швидкий вибір:</span>
+                  {[
+                    "✈️ Авіапереліт",
+                    "🚌 Трансфер",
+                    "🏨 Проживання",
+                    "🍽️ Харчування",
+                    "🩺 Страховка",
+                    "🧳 Ручна поклажа"
+                  ].map(pill => (
+                    <button
+                      key={pill}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.included;
+                        if (current.length > 0 && current[current.length - 1] === '') {
+                          const updated = [...current];
+                          updated[updated.length - 1] = pill;
+                          setFormData({ ...formData, included: updated });
+                        } else {
+                          setFormData({ ...formData, included: [...current, pill] });
+                        }
+                      }}
+                      className="px-2 py-0.5 text-xs bg-luxury-dark border border-luxury-gold/20 text-gray-300 rounded hover:border-luxury-gold transition"
+                    >
+                      {pill}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -719,13 +839,43 @@ export default function AdminAviatury() {
                     </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('notIncluded')}
-                  className="text-luxury-gold hover:text-luxury-gold-light text-sm"
-                >
-                  + Додати пункт
-                </button>
+                <div className="flex justify-between items-center mt-1">
+                  <button
+                    type="button"
+                    onClick={() => addArrayItem('notIncluded')}
+                    className="text-luxury-gold hover:text-luxury-gold-light text-sm"
+                  >
+                    + Додати пункт
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 p-2 bg-luxury-dark-lighter/50 rounded-lg border border-luxury-gold/10">
+                  <span className="text-xs text-gray-400 mr-1">Швидкий вибір:</span>
+                  {[
+                    "🎟️ Екскурсії",
+                    "🪙 Особисті витрати",
+                    "🛂 Віза",
+                    "🍷 Елітні напої",
+                    "🚕 Додатковий трансфер"
+                  ].map(pill => (
+                    <button
+                      key={pill}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.notIncluded;
+                        if (current.length > 0 && current[current.length - 1] === '') {
+                          const updated = [...current];
+                          updated[updated.length - 1] = pill;
+                          setFormData({ ...formData, notIncluded: updated });
+                        } else {
+                          setFormData({ ...formData, notIncluded: [...current, pill] });
+                        }
+                      }}
+                      className="px-2 py-0.5 text-xs bg-luxury-dark border border-luxury-gold/20 text-gray-300 rounded hover:border-luxury-gold transition"
+                    >
+                      {pill}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex gap-4">
