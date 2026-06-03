@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import CountryCitySelector from '../../components/CountryCitySelector'
 import { countriesData } from '../../utils/countriesData'
+import { generateAiTitle } from '../../utils/aiHelper'
 import {
   DndContext,
   closestCenter,
@@ -111,6 +112,24 @@ export default function AdminTours() {
   const [showForm, setShowForm] = useState(false)
   const [editingTour, setEditingTour] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
+
+  const handleGenerateAiFancyTitle = async () => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiTitle(true)
+    try {
+      const generated = await generateAiTitle(formData.country, formData.city)
+      setFormData(prev => ({ ...prev, fancyTitle: generated }))
+      toast.success('AI згенерував привабливу назву туру!')
+    } catch (error) {
+      toast.error('Помилка генерації назви')
+    } finally {
+      setGeneratingAiTitle(false)
+    }
+  }
   const [formData, setFormData] = useState({
     destination: '',
     country: '',
@@ -477,13 +496,23 @@ export default function AdminTours() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2 text-gray-300">Маркетингова назва (наприклад: "Вогонь та Лід")</label>
-                  <input
-                    type="text"
-                    value={formData.fancyTitle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fancyTitle: e.target.value }))}
-                    placeholder="Введіть красиву назву туру..."
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.fancyTitle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fancyTitle: e.target.value }))}
+                      placeholder="Введіть красиву назву туру..."
+                      className="w-full pl-4 pr-32 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiFancyTitle}
+                      disabled={generatingAiTitle}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 text-xs font-bold rounded flex items-center gap-1 transition"
+                    >
+                      {generatingAiTitle ? 'Генерація...' : '✨ AI'}
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">Якщо вказано, ця назва буде головною на сайті. Якщо ні - буде "Місто, Країна".</p>
                 </div>
 

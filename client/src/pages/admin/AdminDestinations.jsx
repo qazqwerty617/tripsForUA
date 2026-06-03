@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
+import { generateAiDescription } from '../../utils/aiHelper'
 
 export default function AdminDestinations() {
   const [destinations, setDestinations] = useState([])
@@ -87,6 +88,29 @@ export default function AdminDestinations() {
     setCountrySuggestions([])
     setShowSuggestions(false)
     toast.success(`Напрямок ${country.nameUk} ${country.flag} автоматично заповнено!`)
+  }
+
+  const [generatingAiDesc, setGeneratingAiDesc] = useState(false)
+
+  const handleGenerateAiDescription = async () => {
+    if (!formData.nameUk) {
+      toast.error('Будь ласка, спершу оберіть або введіть назву напрямку!')
+      return
+    }
+    setGeneratingAiDesc(true)
+    try {
+      const generated = await generateAiDescription(formData.nameUk)
+      setFormData(prev => ({ 
+        ...prev, 
+        description: generated,
+        shortDescription: generated.split(/[.!?]/)[0] + '.'
+      }))
+      toast.success('AI згенерував повний та короткий опис!')
+    } catch (error) {
+      toast.error('Помилка генерації опису')
+    } finally {
+      setGeneratingAiDesc(false)
+    }
   }
 
   useEffect(() => {
@@ -362,7 +386,17 @@ export default function AdminDestinations() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Опис *</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-300">Опис *</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiDescription}
+                    disabled={generatingAiDesc}
+                    className="px-3 py-1 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 text-xs font-bold rounded flex items-center gap-1 transition"
+                  >
+                    {generatingAiDesc ? 'Генерація...' : '✨ AI Згенерувати'}
+                  </button>
+                </div>
                 <textarea
                   required
                   rows="4"

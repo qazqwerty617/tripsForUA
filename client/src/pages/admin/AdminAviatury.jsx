@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
+import { generateAiTitle } from '../../utils/aiHelper'
 import {
   DndContext,
   closestCenter,
@@ -107,6 +108,25 @@ export default function AdminAviatury() {
   const [searchQuery, setSearchQuery] = useState('')
   const [countrySuggestions, setCountrySuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
+
+  const handleGenerateAiTitle = async () => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiTitle(true)
+    try {
+      const generated = await generateAiTitle(formData.country, formData.name)
+      let cleaned = generated.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim()
+      setFormData(prev => ({ ...prev, title: cleaned }))
+      toast.success('AI згенерував привабливу назву туру!')
+    } catch (error) {
+      toast.error('Помилка генерації назви')
+    } finally {
+      setGeneratingAiTitle(false)
+    }
+  }
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -501,13 +521,23 @@ export default function AdminAviatury() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Заголовок (опціонально)</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Наприклад: Райськийвідпочинок на Криті"
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Наприклад: Райський відпочинок на Криті"
+                      className="w-full pl-4 pr-24 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiTitle}
+                      disabled={generatingAiTitle}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 text-xs font-bold rounded flex items-center gap-1 transition"
+                    >
+                      {generatingAiTitle ? 'Генерація...' : '✨ AI'}
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">Якщо не вказано, використовується назва</p>
                 </div>
 
