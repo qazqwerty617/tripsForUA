@@ -149,3 +149,65 @@ export async function generateAiDescription(destinationName) {
 
   return fallback;
 }
+
+export async function generateAiTourDescription(country, city, title) {
+  const place = city ? `${city}, ${country}` : country;
+  const tourName = title || `Подорож у ${place}`;
+  
+  const fallback = `Неймовірний екскурсійний тур "${tourName}". На вас чекає захоплююча подорож до визначних пам'яток, комфортабельне проживання, трансфер та супровід професійного гіда. Відкрийте для себе нові куточки нашої планети та отримайте море незабутніх емоцій!`;
+
+  const prompt = `Ти професійний копірайтер для туристичної агенції. Напиши ОДИН красивий, захоплюючий опис для екскурсійного туру "${tourName}" у місті/країні ${place} (3-4 речення, приблизно 40-50 слів). Опис має спонукати забронювати подорож. Текст має бути виключно українською мовою, без вступних слів, лапок або привітань.`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const text = await response.text();
+      const cleaned = text.replace(/["'«»]/g, '').trim();
+      if (cleaned && cleaned.length > 30) {
+        return cleaned;
+      }
+    }
+  } catch (error) {
+    console.warn("Pollinations AI error, using local fallback tour description:", error);
+  }
+
+  return fallback;
+}
+
+export async function generateAiAviaturyDescription(country, name) {
+  const place = name ? `${name} (${country})` : country;
+  const fallback = `Запрошуємо вас у незабутню індивідуальну подорож у ${place}. Пакет відпочинку включає авіапереліт, швидкий трансфер, проживання в затишному готелі, страховку та чудовий сервіс. Насолоджуйтеся морем та безтурботним релаксом!`;
+
+  const prompt = `Ти професійний копірайтер для туристичної агенції. Напиши ОДИН красивий, захоплюючий опис для індивідуальної подорожі в готель/резорт "${place}" (3-4 речення, приблизно 40-50 слів). Опис має спонукати забронювати подорож. Текст має бути виключно українською мовою, без вступних слів, лапок або привітань.`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const text = await response.text();
+      const cleaned = text.replace(/["'«»]/g, '').trim();
+      if (cleaned && cleaned.length > 30) {
+        return cleaned;
+      }
+    }
+  } catch (error) {
+    console.warn("Pollinations AI error, using local fallback aviatury description:", error);
+  }
+
+  return fallback;
+}

@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import CountryCitySelector from '../../components/CountryCitySelector'
 import { countriesData } from '../../utils/countriesData'
-import { generateAiTitle } from '../../utils/aiHelper'
+import { generateAiTitle, generateAiTourDescription } from '../../utils/aiHelper'
 import {
   DndContext,
   closestCenter,
@@ -128,6 +128,29 @@ export default function AdminTours() {
       toast.error('Помилка генерації назви')
     } finally {
       setGeneratingAiTitle(false)
+    }
+  }
+
+  const [generatingAiDesc, setGeneratingAiDesc] = useState(false)
+
+  const handleGenerateAiDescription = async () => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiDesc(true)
+    try {
+      const generated = await generateAiTourDescription(formData.country, formData.city, formData.fancyTitle)
+      setFormData(prev => ({ 
+        ...prev, 
+        description: generated,
+        shortDescription: generated.split(/[.!?]/)[0] + '.'
+      }))
+      toast.success('AI згенерував повний та короткий опис туру!')
+    } catch (error) {
+      toast.error('Помилка генерації опису')
+    } finally {
+      setGeneratingAiDesc(false)
     }
   }
   const [formData, setFormData] = useState({
@@ -669,7 +692,17 @@ export default function AdminTours() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Опис *</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-300">Опис *</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiDescription}
+                    disabled={generatingAiDesc}
+                    className="px-3 py-1 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 text-xs font-bold rounded flex items-center gap-1 transition"
+                  >
+                    {generatingAiDesc ? 'Генерація...' : '✨ AI Згенерувати'}
+                  </button>
+                </div>
                 <textarea
                   required
                   rows="4"

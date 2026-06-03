@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
-import { generateAiTitle } from '../../utils/aiHelper'
+import { generateAiTitle, generateAiAviaturyDescription } from '../../utils/aiHelper'
 import {
   DndContext,
   closestCenter,
@@ -125,6 +125,25 @@ export default function AdminAviatury() {
       toast.error('Помилка генерації назви')
     } finally {
       setGeneratingAiTitle(false)
+    }
+  }
+
+  const [generatingAiDesc, setGeneratingAiDesc] = useState(false)
+
+  const handleGenerateAiDescription = async () => {
+    if (!formData.country) {
+      toast.error('Будь ласка, спершу оберіть країну!')
+      return
+    }
+    setGeneratingAiDesc(true)
+    try {
+      const generated = await generateAiAviaturyDescription(formData.country, formData.name)
+      setFormData(prev => ({ ...prev, description: generated }))
+      toast.success('AI згенерував опис авіатуру!')
+    } catch (error) {
+      toast.error('Помилка генерації опису')
+    } finally {
+      setGeneratingAiDesc(false)
     }
   }
 
@@ -496,7 +515,17 @@ export default function AdminAviatury() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-300">Опис</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiDescription}
+                      disabled={generatingAiDesc}
+                      className="px-3 py-1 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 text-xs font-bold rounded flex items-center gap-1 transition"
+                    >
+                      {generatingAiDesc ? 'Генерація...' : '✨ AI Згенерувати'}
+                    </button>
+                  </div>
                   <textarea
                     rows={4}
                     maxLength={500}
