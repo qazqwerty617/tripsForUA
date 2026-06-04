@@ -292,7 +292,7 @@ export default function TourDetail() {
           <div className="lg:col-span-1">
             <div className={`bg-white rounded-2xl p-6 shadow-xl ${showBookingForm ? '' : 'sticky top-24'}`}>
               <div className="text-center mb-6 pb-6 border-b">
-                {tour.originalPrice && tour.originalPrice > tour.price && (
+                {tour.originalPrice > 0 && (
                   <div className="text-xl text-gray-400 line-through mb-1">
                     від €{tour.originalPrice}
                   </div>

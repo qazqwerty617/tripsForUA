@@ -562,6 +562,11 @@ export default function Home() {
                     <div className="lg:col-span-1">
                       <div className="bg-white rounded-2xl p-6 shadow-xl sticky top-4">
                         <div className="text-center mb-6 pb-6 border-b">
+                          {selectedAviatur.originalPrice > 0 && (
+                            <div className="text-xl text-gray-400 line-through mb-1">
+                              від €{selectedAviatur.originalPrice}
+                            </div>
+                          )}
                           <div className="text-4xl font-bold text-primary-600 mb-2">
                             від €{selectedAviatur.price}
                           </div>
