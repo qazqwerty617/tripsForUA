@@ -13,6 +13,9 @@ The bot runs in a separate **screen** session (`405593.bot`) — **do NOT touch 
 # 1. Pull latest code
 cd /var/www/tripsforua && git fetch origin main && git reset --hard origin/main
 
+# 1.5 Fix execute permissions on Go binary (important after git pull!)
+chmod +x /var/www/tripsforua/server_go/server_bin
+
 # 2. Rebuild frontend
 cd client && npm run build && cd ..
 

@@ -179,8 +179,7 @@ export default function Home() {
           </div>
 
           {/* Info block */}
-          <div className="glass border-l-4 border-luxury-gold rounded-2xl px-8 py-6 mb-10 flex gap-5 items-start">
-            <div className="text-3xl mt-0.5">✨</div>
+          <div className="glass border-l-4 border-luxury-gold rounded-2xl px-8 py-6 mb-10">
             <p className="text-gray-300 text-lg leading-relaxed">
               <span className="text-luxury-gold font-semibold">Унікальний формат подорожі</span>, де комфорт поєднується з найяскравішими локаціями. Дати, готель і місто вильоту — обираєте самостійно. Програми продумані так, щоб побачити все найголовніше — і в той же час, без поспіху, насолоджуватись курортним відпочинком.
             </p>
