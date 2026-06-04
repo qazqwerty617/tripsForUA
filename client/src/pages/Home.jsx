@@ -16,6 +16,7 @@ export default function Home() {
   const [showAviaturModal, setShowAviaturModal] = useState(false)
   const [showAllAviatury, setShowAllAviatury] = useState(() => searchParams.get('showAllAviatury') === 'true')
   const [resortFilter, setResortFilter] = useState(() => searchParams.get('resortFilter') || 'all')
+  const [tourSort, setTourSort] = useState(() => searchParams.get('tourSort') || 'all')
   const [showAllTours, setShowAllTours] = useState(() => searchParams.get('showAllTours') === 'true')
 
   useEffect(() => {
@@ -62,9 +63,10 @@ export default function Home() {
     if (showAllTours) params.set('showAllTours', 'true')
     if (resortFilter !== 'all') params.set('resortFilter', resortFilter)
     if (showAllAviatury) params.set('showAllAviatury', 'true')
+    if (tourSort !== 'all') params.set('tourSort', tourSort)
 
     setSearchParams(params, { replace: true })
-  }, [showAllTours, resortFilter, showAllAviatury, setSearchParams])
+  }, [showAllTours, resortFilter, showAllAviatury, tourSort, setSearchParams])
 
   // Show tours (all or first 6)
   useEffect(() => {
@@ -75,20 +77,25 @@ export default function Home() {
     }
   }, [showAllTours, allTours])
 
-  // Filter aviatury by resort type
+  // Filter/sort aviatury
   useEffect(() => {
     if (allAviatury.length > 0) {
-      let filtered = allAviatury
-      if (resortFilter === 'resort') {
-        filtered = allAviatury.filter(item => item.isResort === true)
-      } else if (resortFilter === 'non-resort') {
-        filtered = allAviatury.filter(item => item.isResort !== true)
+      let sorted = [...allAviatury]
+      if (tourSort === 'bestseller') {
+        // hot items first, then sort by views or keep order
+        sorted = sorted.sort((a, b) => {
+          if (a.hot && !b.hot) return -1
+          if (!a.hot && b.hot) return 1
+          return 0
+        })
+      } else if (tourSort === 'cheapest') {
+        sorted = sorted.sort((a, b) => (a.price || 0) - (b.price || 0))
       }
-      setAviatury(filtered)
+      setAviatury(sorted)
     } else {
       setAviatury([])
     }
-  }, [resortFilter, allAviatury])
+  }, [tourSort, allAviatury])
 
   return (
     <div className="bg-[#0f0f0f]">
@@ -166,9 +173,17 @@ export default function Home() {
       {/* Екскурсійні тури */}
       <section className="py-20 bg-luxury-dark-lighter" id="tours">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Екскурсійні тури</h2>
-            <p className="text-xl text-gray-400">Обирай подорож мрії — під будь-які зручні дати</p>
+            <p className="text-xl text-gray-400">Авіарейси, трансфер, готель, харчування, вся програма туру</p>
+          </div>
+
+          {/* Info block */}
+          <div className="glass border-l-4 border-luxury-gold rounded-2xl px-8 py-6 mb-10 flex gap-5 items-start">
+            <div className="text-3xl mt-0.5">✨</div>
+            <p className="text-gray-300 text-lg leading-relaxed">
+              <span className="text-luxury-gold font-semibold">Унікальний формат подорожі</span>, де комфорт поєднується з найяскравішими локаціями. Дати, готель і місто вильоту — обираєте самостійно. Програми продумані так, щоб побачити все найголовніше — і в той же час, без поспіху, насолоджуватись курортним відпочинком.
+            </p>
           </div>
 
           {tours.length === 0 && !loading && (
@@ -233,16 +248,16 @@ export default function Home() {
       <section className="py-20 bg-luxury-dark" id="aviatury">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Індивідуальні тури</h2>
-            <p className="text-xl text-gray-300">Подорожуй комфортно, вигідно та без зайвих витрат</p>
+            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Стандартні тури</h2>
+            <p className="text-xl text-gray-300">Авіарейси, готель, харчування, страхування, путівник, онлайн-підтримка 24/7</p>
           </div>
 
-          {/* Фільтр за типом */}
+          {/* Фільтр/сортування */}
           <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
             <div className="flex flex-wrap gap-3 justify-center">
               <button
-                onClick={() => setResortFilter('all')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'all'
+                onClick={() => setTourSort('all')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'all'
                   ? 'bg-luxury-gold text-luxury-dark'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
@@ -250,25 +265,25 @@ export default function Home() {
                 Всі тури
               </button>
               <button
-                onClick={() => setResortFilter('resort')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'resort'
+                onClick={() => setTourSort('bestseller')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'bestseller'
                   ? 'bg-luxury-gold text-luxury-dark'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                🏛️ Екскурсійні
+                🔥 Бестселлер
               </button>
               <button
-                onClick={() => setResortFilter('non-resort')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${resortFilter === 'non-resort'
+                onClick={() => setTourSort('cheapest')}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'cheapest'
                   ? 'bg-luxury-gold text-luxury-dark'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                ✈️ Стандартні
+                💰 Найвигідніший
               </button>
             </div>
-            {resortFilter !== 'all' && (
+            {tourSort !== 'all' && (
               <p className="text-sm text-gray-400 mt-3 text-center">
                 Знайдено: <span className="text-luxury-gold font-semibold">{aviatury.length}</span> {aviatury.length === 0 ? 'турів' : aviatury.length === 1 ? 'тур' : aviatury.length < 5 ? 'тури' : 'турів'}
               </p>
@@ -278,7 +293,7 @@ export default function Home() {
           {aviatury.length === 0 && !loading && (
             <div className="text-center py-16 glass rounded-2xl mb-8">
               <div className="text-5xl mb-4">🌴</div>
-              <p className="text-gray-400 text-lg">Наразі немає доступних індивідуальних турів</p>
+              <p className="text-gray-400 text-lg">Наразі немає доступних стандартних турів</p>
               <p className="text-gray-500 text-sm mt-2">Нові пропозиції додаються регулярно</p>
             </div>
           )}
@@ -496,7 +511,7 @@ export default function Home() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        <span>{selectedAviatur.isResort ? 'Екскурсійний' : 'Індивідуальний підбір'}</span>
+                        <span>Стандартний тур</span>
                       </div>
                     </div>
                   </div>
@@ -575,7 +590,7 @@ export default function Home() {
                               Тип туру
                             </span>
                             <span className="font-semibold text-primary-600 text-sm">
-                              {selectedAviatur.isResort ? 'Екскурсійний' : 'Індивідуальний / Груповий'}
+                              Стандартний
                             </span>
                           </div>
                         </div>

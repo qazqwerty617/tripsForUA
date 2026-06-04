@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Calendar, Users, Clock, Check, X, MapPin, MessageCircle, Instagram } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet-async'
 
 export default function TourDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [tour, setTour] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showBookingForm, setShowBookingForm] = useState(false)
@@ -142,6 +143,14 @@ export default function TourDetail() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 backdrop-blur-sm hover:bg-white/40 transition rounded-full flex items-center justify-center text-white shadow-lg"
+          aria-label="Назад"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <div className="absolute bottom-0 left-0 right-0 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
             <div className="flex items-center gap-3 mb-4">
