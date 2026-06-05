@@ -761,7 +761,7 @@ export default function AdminTours() {
                     className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
                   />
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {['за людину', 'за сімʼю 2+1', 'за групу до 6 осіб'].map((opt) => (
+                    {['за людину', 'за сімʼю 1+1', 'за сімʼю 2+1', 'за сімʼю 2+2', 'за сімʼю 3+1', 'за групу до 6 осіб', 'за групу до 8 осіб'].map((opt) => (
                       <button
                         key={opt}
                         type="button"

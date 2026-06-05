@@ -319,7 +319,7 @@ export default function Home() {
                   />
                   {aviatur.hot && (
                     <div className="absolute top-3 left-3 bg-luxury-dark/30 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg border border-white/20">
-                      🔥 Гарячий тур
+                      🔥 Бестселлер
                     </div>
                   )}
                 </div>
@@ -394,9 +394,9 @@ export default function Home() {
                     <Globe className="h-6 w-6 text-luxury-gold" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Всі туроператори в одному місці</h3>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Всі екскурсійні тури в одному місці</h3>
                     <p className="text-gray-300">
-                      Фільтруй всі тури за ціною та датами
+                      Обирай тільки найкраще
                     </p>
                   </div>
                 </div>
@@ -416,9 +416,9 @@ export default function Home() {
                     <MapPin className="h-6 w-6 text-luxury-gold" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Унікальні локації</h3>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-100">Зручний формат відпочинку</h3>
                     <p className="text-gray-300">
-                      Ви побачите місця, що недоступні більшості туристів
+                      Встигни побачити ВСЕ з максимальним комфортом
                     </p>
                   </div>
                 </div>
