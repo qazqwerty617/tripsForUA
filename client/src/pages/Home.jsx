@@ -149,8 +149,8 @@ export default function Home() {
               <div className="bg-luxury-gold/15 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float">
                 <Globe className="h-8 w-8 text-luxury-gold" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">30+ напрямків</h3>
-              <p className="text-gray-400">Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії</p>
+              <h3 className="text-xl font-semibold mb-2 text-luxury-gold">55+ напрямків</h3>
+              <p className="text-gray-400">Понад 55 напрямків! Готові авіатури з країн Європи</p>
             </div>
             <div className="text-center glass rounded-2xl p-8 animate-fade-in-up delay-200">
               <div className="bg-luxury-gold/15 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float" style={{ animationDelay: '0.5s' }}>
