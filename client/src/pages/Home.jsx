@@ -603,7 +603,7 @@ export default function Home() {
                                 <MapPin className="h-4 w-4" />
                                 Можливі вильоти з:
                               </span>
-                              <span className="font-semibold text-gray-900 leading-relaxed text-sm">
+                              <span className="font-semibold text-gray-900 leading-relaxed text-sm italic">
                                 {selectedAviatur.possibleDepartures}
                               </span>
                             </div>
