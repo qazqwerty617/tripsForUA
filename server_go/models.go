@@ -173,11 +173,12 @@ type Aviatur struct {
 	AvailableTo   time.Time          `bson:"availableTo" json:"availableTo"`
 	Included      []string           `bson:"included" json:"included"`
 	NotIncluded   []string           `bson:"notIncluded" json:"notIncluded"`
-	IsResort      bool               `bson:"isResort" json:"isResort"`
-	Order         int                `bson:"order" json:"order"`
-	Status        string             `bson:"status" json:"status"`
-	CreatedAt     time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
-	UpdatedAt     time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
+	IsResort           bool               `bson:"isResort" json:"isResort"`
+	Order              int                `bson:"order" json:"order"`
+	Status             string             `bson:"status" json:"status"`
+	PossibleDepartures string             `bson:"possibleDepartures" json:"possibleDepartures"`
+	CreatedAt          time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
+	UpdatedAt          time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
 func (a *Aviatur) UnmarshalJSON(data []byte) error {

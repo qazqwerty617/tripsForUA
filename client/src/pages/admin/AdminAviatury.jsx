@@ -125,7 +125,8 @@ export default function AdminAviatury() {
     isResort: false,
     included: ['Переліт', 'Трансфер', 'Проживання'],
     notIncluded: ['Екскурсії', 'Страховка'],
-    status: 'active'
+    status: 'active',
+    possibleDepartures: ''
   })
 
   const handleGenerateAiTitle = async () => {
@@ -324,7 +325,8 @@ export default function AdminAviatury() {
       isResort: aviatur.isResort || false,
       included: aviatur.included || ['Переліт', 'Трансфер', 'Проживання'],
       notIncluded: aviatur.notIncluded || ['Екскурсії', 'Страховка'],
-      status: aviatur.status
+      status: aviatur.status,
+      possibleDepartures: aviatur.possibleDepartures || ''
     })
     setShowForm(true)
   }
@@ -346,7 +348,8 @@ export default function AdminAviatury() {
       isResort: false,
       included: ['Переліт', 'Трансфер', 'Проживання'],
       notIncluded: ['Екскурсії', 'Страховка'],
-      status: 'active'
+      status: 'active',
+      possibleDepartures: ''
     })
     setEditingAviatur(null)
   }
@@ -415,7 +418,7 @@ export default function AdminAviatury() {
             <Link to="/mng-x7k9p2-secure" className="text-luxury-gold hover:text-luxury-gold-light transition">
               <ArrowLeft className="h-6 w-6" />
             </Link>
-            <h1 className="text-3xl font-bold text-luxury-gold">Управління Індивідуальними турами</h1>
+            <h1 className="text-3xl font-bold text-luxury-gold">Управління Стандартними турами</h1>
           </div>
           {!showForm && (
             <button
@@ -612,6 +615,17 @@ export default function AdminAviatury() {
                     <option value="active">Активний</option>
                     <option value="inactive">Неактивний</option>
                   </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Можливі вильоти з (через кому)</label>
+                  <input
+                    type="text"
+                    value={formData.possibleDepartures || ''}
+                    onChange={(e) => setFormData({ ...formData, possibleDepartures: e.target.value })}
+                    placeholder="Наприклад: Польща, Чехія, Німеччина, Молдова, Румунія..."
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+                  />
                 </div>
               </div>
 
