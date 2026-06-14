@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -29,12 +30,32 @@ func LoadIndexHTML() {
 	}
 }
 
+func getDomainAndScheme(c *gin.Context) string {
+	domain := os.Getenv("DOMAIN_NAME")
+	if domain == "" {
+		scheme := "https"
+		if c.Request.TLS == nil {
+			scheme = "http"
+		}
+		if proto := c.GetHeader("X-Forwarded-Proto"); proto != "" {
+			scheme = proto
+		}
+		domain = scheme + "://" + c.Request.Host
+	} else {
+		if !strings.HasPrefix(domain, "http://") && !strings.HasPrefix(domain, "https://") {
+			domain = "https://" + domain
+		}
+	}
+	return strings.TrimSuffix(domain, "/")
+}
+
 func HandleSEORoute() gin.HandlerFunc {
 	titleRegex := regexp.MustCompile(`<title>[\s\S]*?<\/title>`)
 	descRegex := regexp.MustCompile(`<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>`)
 	ogTitleRegex := regexp.MustCompile(`<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>`)
 	ogDescRegex := regexp.MustCompile(`<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>`)
 	ogImageRegex := regexp.MustCompile(`<meta\s+property="og:image"\s+content="[\s\S]*?"\s*\/?>`)
+	canonicalRegex := regexp.MustCompile(`<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>`)
 
 	return func(c *gin.Context) {
 		if indexHtml == "" {
@@ -42,12 +63,16 @@ func HandleSEORoute() gin.HandlerFunc {
 			return
 		}
 
+		domain := getDomainAndScheme(c)
+		currentURL := domain + c.Request.URL.Path
+
 		id := c.Param("id")
 		slug := c.Param("slug")
 
-		title := "Trips for Ukraine"
-		description := "Авторські тури по всьому світу для українців"
-		image := ""
+		title := "Trips for Ukraine - Авторські тури по всьому світу"
+		description := "Понад 30 ексклюзивних напрямків: від Мадагаскару до Японії. 15000+ клієнтів. Довіра - наше все. Більше 6 років на ринку, найбільша аудиторія в Україні."
+		image := domain + "/og-image.jpg"
+		schemaJSON := ""
 
 		ctx := context.Background()
 
@@ -57,27 +82,79 @@ func HandleSEORoute() gin.HandlerFunc {
 				var tour Tour
 				if ToursCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&tour) == nil {
 					title = tour.Title + " | Trips for Ukraine"
-					if len(tour.Description) > 160 {
-						description = tour.Description[:160]
+					if tour.ShortDescription != "" {
+						description = tour.ShortDescription
+					} else if len(tour.Description) > 160 {
+						description = tour.Description[:160] + "..."
 					} else {
 						description = tour.Description
 					}
 					if len(tour.Images) > 0 {
 						image = tour.Images[0]
 					}
+
+					// Dynamic Tour Schema
+					schemaJSON = fmt.Sprintf(`{
+						"@context": "https://schema.org",
+						"@type": "Product",
+						"name": %q,
+						"description": %q,
+						"image": %q,
+						"offers": {
+							"@type": "Offer",
+							"price": "%.2f",
+							"priceCurrency": "EUR",
+							"availability": "https://schema.org/InStock",
+							"url": %q
+						}
+					}`, tour.Title, description, image, tour.Price, currentURL)
 				}
 			}
 		} else if slug != "" {
 			var dest Destination
 			if DestCollection.FindOne(ctx, bson.M{"slug": slug}).Decode(&dest) == nil {
-				title = dest.NameUk + " | Trips for Ukraine"
+				title = dest.NameUk + " | Напрямки | Trips for Ukraine"
 				descText := "Відкрийте для себе " + dest.NameUk + " з Trips for Ukraine. " + dest.Description
-				if len(descText) > 100 {
-					description = descText[:100]
+				if len(descText) > 160 {
+					description = descText[:157] + "..."
 				} else {
 					description = descText
 				}
+				if dest.Image != "" {
+					image = dest.Image
+				}
+
+				// Dynamic Place Schema
+				schemaJSON = fmt.Sprintf(`{
+					"@context": "https://schema.org",
+					"@type": "TouristDestination",
+					"name": %q,
+					"description": %q,
+					"image": %q
+				}`, dest.NameUk, description, image)
 			}
+		} else if c.Request.URL.Path == "/destinations" {
+			title = "Ексклюзивні туристичні напрямки | Trips for Ukraine"
+			description = "Подорожуйте світом з Trips for Ukraine. Ексклюзивні авторські тури, перевірені маршрути: Мадагаскар, Японія, Норвегія, Перу та багато інших країн."
+
+			schemaJSON = fmt.Sprintf(`{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Напрямки подорожей",
+				"description": %q,
+				"url": %q
+			}`, description, currentURL)
+		} else {
+			// Homepage
+			schemaJSON = fmt.Sprintf(`{
+				"@context": "https://schema.org",
+				"@type": "TravelAgency",
+				"name": "Trips for Ukraine",
+				"description": %q,
+				"url": %q,
+				"image": %q,
+				"priceRange": "$$$"
+			}`, description, domain, image)
 		}
 
 		html := indexHtml
@@ -87,7 +164,88 @@ func HandleSEORoute() gin.HandlerFunc {
 		html = ogDescRegex.ReplaceAllString(html, "<meta property=\"og:description\" content=\""+description+"\" />")
 		html = ogImageRegex.ReplaceAllString(html, "<meta property=\"og:image\" content=\""+image+"\" />")
 
+		// Replace canonical URL
+		canonicalTag := fmt.Sprintf(`<link rel="canonical" href="%s" />`, currentURL)
+		if canonicalRegex.MatchString(html) {
+			html = canonicalRegex.ReplaceAllString(html, canonicalTag)
+		} else {
+			html = strings.Replace(html, "</head>", "  "+canonicalTag+"\n</head>", 1)
+		}
+
+		// Inject JSON-LD structured data
+		if schemaJSON != "" {
+			scriptBlock := "\n  <script type=\"application/ld+json\">\n  " + schemaJSON + "\n  </script>\n</head>"
+			html = strings.Replace(html, "</head>", scriptBlock, 1)
+		}
+
 		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+	}
+}
+
+func HandleSitemapRoute() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		domain := getDomainAndScheme(c)
+
+		ctx := context.Background()
+
+		// 1. Fetch active tours
+		var tours []Tour
+		cursor, err := ToursCollection.Find(ctx, bson.M{"status": "active"})
+		if err == nil {
+			cursor.All(ctx, &tours)
+		}
+
+		// 2. Fetch destinations
+		var dests []Destination
+		cursorDest, err := DestCollection.Find(ctx, bson.M{})
+		if err == nil {
+			cursorDest.All(ctx, &dests)
+		}
+
+		var sb strings.Builder
+		sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+		sb.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+
+		// Home page
+		sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n", domain))
+
+		// Destinations list
+		sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/destinations</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n", domain))
+
+		// Active tours
+		for _, tour := range tours {
+			sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/tours/%s</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n", domain, tour.ID.Hex()))
+		}
+
+		// Destinations detail
+		for _, dest := range dests {
+			if dest.Slug != "" {
+				sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/destinations/%s</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n", domain, dest.Slug))
+			}
+		}
+
+		sb.WriteString("</urlset>\n")
+
+		c.Header("Content-Type", "application/xml; charset=utf-8")
+		c.String(http.StatusOK, sb.String())
+	}
+}
+
+func HandleRobotsRoute() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		domain := getDomainAndScheme(c)
+
+		robots := fmt.Sprintf(`User-agent: *
+Allow: /
+Disallow: /mng-x7k9p2-secure/
+Disallow: /api/auth
+Disallow: /api/upload
+
+Sitemap: %s/sitemap.xml
+`, domain)
+
+		c.Header("Content-Type", "text/plain; charset=utf-8")
+		c.String(http.StatusOK, robots)
 	}
 }
 
@@ -221,8 +379,14 @@ func main() {
 		}
 	}
 
+	// Sitemap and Robots
+	r.GET("/sitemap.xml", HandleSitemapRoute())
+	r.GET("/robots.txt", HandleRobotsRoute())
+
 	// Serve React Frontend in Production
 	if isProduction {
+		r.GET("/", HandleSEORoute())
+		r.GET("/destinations", HandleSEORoute())
 		r.GET("/tours/:id", HandleSEORoute())
 		r.GET("/destinations/:slug", HandleSEORoute())
 		r.NoRoute(ServeStaticOrIndex())
