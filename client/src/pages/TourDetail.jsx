@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Calendar, Users, Clock, Check, X, MapPin, MessageCircle, Instagram } from 'lucide-react'
+import { Calendar, Users, Clock, Check, X, MapPin, MessageCircle, Instagram, Plus } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -214,11 +214,11 @@ export default function TourDetail() {
 
               {tour.notIncluded && tour.notIncluded.length > 0 && (
                 <div className="bg-white rounded-2xl p-6 shadow-md">
-                  <h3 className="text-xl font-bold mb-4 text-gray-900">Не включено в ціну</h3>
+                  <h3 className="text-xl font-bold mb-4 text-gray-900">Додаткові послуги та активності</h3>
                   <ul className="space-y-2">
                     {tour.notIncluded.map((item, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <X className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <Plus className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-700">{item}</span>
                       </li>
                     ))}
@@ -329,6 +329,17 @@ export default function TourDetail() {
                     {tour.tourBasis || 'Індивідуальний / Груповий'}
                   </span>
                 </div>
+                {tour.possibleDepartures && (
+                  <div className="flex flex-col py-3 border-b">
+                    <span className="text-gray-800 flex items-center gap-2 mb-1">
+                      <MapPin className="h-4 w-4" />
+                      Можливі вильоти з:
+                    </span>
+                    <span className="font-semibold text-gray-900 leading-relaxed text-sm">
+                      {tour.possibleDepartures}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {(tour.maxParticipants <= 0 || !tour.maxParticipants || tour.availableSpots > 0) ? (

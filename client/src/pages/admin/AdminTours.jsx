@@ -78,15 +78,6 @@ function SortableTourRow({ tour, handleEdit, handleDelete, countriesData }) {
       <td className="px-4 py-4 text-gray-300">
         {tour.maxParticipants > 0 ? `${tour.availableSpots}/${tour.maxParticipants}` : 'Без ліміту'}
       </td>
-      <td className="px-4 py-4">
-        <span className={`px-2 py-1 text-xs rounded-full ${tour.status === 'active' ? 'bg-green-900/50 text-green-300 border border-green-700' :
-          tour.status === 'completed' ? 'bg-gray-700 text-gray-300 border border-gray-600' :
-            'bg-red-900/50 text-red-300 border border-red-700'
-          }`}>
-          {tour.status === 'active' ? 'Активний' :
-            tour.status === 'completed' ? 'Завершений' : 'Скасований'}
-        </span>
-      </td>
       <td className="px-4 py-4 text-right">
         <button
           onClick={() => handleEdit(tour)}
@@ -198,7 +189,8 @@ export default function AdminTours() {
     tourType: 'exclusive',
     contactTelegram: '',
     contactInstagram: '',
-    fancyTitle: ''
+    fancyTitle: '',
+    possibleDepartures: ''
   })
 
   useEffect(() => {
@@ -386,7 +378,8 @@ export default function AdminTours() {
       contactInstagram: tour.contactInstagram || '',
       fancyTitle: tour.fancyTitle || '',
       priceUnit: tour.priceUnit || 'за людину',
-      tourBasis: tour.tourBasis || 'Індивідуальний / Груповий'
+      tourBasis: tour.tourBasis || 'Індивідуальний / Груповий',
+      possibleDepartures: tour.possibleDepartures || ''
     })
     setShowForm(true)
   }
@@ -419,7 +412,8 @@ export default function AdminTours() {
       contactInstagram: '',
       fancyTitle: '',
       priceUnit: 'за людину',
-      tourBasis: 'Індивідуальний / Груповий'
+      tourBasis: 'Індивідуальний / Груповий',
+      possibleDepartures: ''
     })
   }
 
@@ -728,18 +722,6 @@ export default function AdminTours() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Статус *</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                  >
-                    <option value="active">Активний</option>
-                    <option value="completed">Завершений</option>
-                    <option value="cancelled">Скасований</option>
-                  </select>
-                </div>
 
                 <div className="flex items-center">
                   <input
@@ -795,6 +777,17 @@ export default function AdminTours() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Можливі вильоти з (через кому)</label>
+                  <input
+                    type="text"
+                    value={formData.possibleDepartures || ''}
+                    onChange={(e) => setFormData({ ...formData, possibleDepartures: e.target.value })}
+                    placeholder="Наприклад: Польща, Чехія, Німеччина, Молдова, Румунія, Угорщина..."
+                    className="w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold placeholder-gray-500"
+                  />
                 </div>
               </div>
 
@@ -1004,7 +997,7 @@ export default function AdminTours() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Не включено в ціну</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Додаткові послуги та активності</label>
                   {formData.notIncluded.map((item, index) => (
                     <div key={index} className="flex gap-2 mb-2">
                       <input
@@ -1074,7 +1067,6 @@ export default function AdminTours() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Ціна</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Дата</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Місця</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-luxury-gold uppercase">Статус</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-luxury-gold uppercase">Дії</th>
                   </tr>
                 </thead>
