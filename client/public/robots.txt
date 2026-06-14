@@ -14,4 +14,4 @@ Disallow: /destinations
 # Disallow: /uploads
 
 # Sitemap (додайте після створення)
-Sitemap: https://tripsforukrpremium.com/sitemap.xml
+Sitemap: https://tripsforukraine.com/sitemap.xml
