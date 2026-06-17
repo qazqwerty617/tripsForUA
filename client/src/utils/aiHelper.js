@@ -1,6 +1,11 @@
 // ==========================================
 // AI Helper — Smart AI for tours
+// Powered by NVIDIA NIM (llama-3.3-70b + SDXL)
+// Fallback: puter.js → Pollinations → local templates
 // ==========================================
+
+// NVIDIA NIM API key — set in .env as VITE_NVIDIA_API_KEY
+const NVIDIA_API_KEY = import.meta.env.VITE_NVIDIA_API_KEY || '';
 
 // --- Translation map ---
 const translationMap = {
@@ -156,13 +161,94 @@ function getUnsplashUrl(photoId) {
 }
 
 // ==========================================
-// TEXT AI — puter.js (free, no key, no rate limit)
-// Falls back to smart local templates
+// NVIDIA NIM — Llama 3.3 70B (best free text AI)
+// ==========================================
+
+async function callNvidiaAI(prompt) {
+  if (!NVIDIA_API_KEY) return null;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'meta/llama-3.3-70b-instruct',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 300,
+        stream: false,
+      }),
+    });
+    clearTimeout(tid);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    return text && text.length > 5 ? text : null;
+  } catch (e) {
+    console.warn('NVIDIA NIM text failed:', e.message);
+    return null;
+  }
+}
+
+// ==========================================
+// NVIDIA NIM — Stable Diffusion XL (best free image AI)
+// Returns URL to generated image (base64 or URL)
+// ==========================================
+
+async function generateNvidiaSDXLImage(prompt) {
+  if (!NVIDIA_API_KEY) return null;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 30000);
+    const res = await fetch('https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-xl', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        text_prompts: [{ text: prompt, weight: 1 }],
+        negative_prompt: 'blurry, low quality, striped, distorted, watermark, text, ugly, bad anatomy',
+        sampler: 'K_EULER_ANCESTRAL',
+        steps: 30,
+        cfg_scale: 8,
+        seed: Math.floor(Math.random() * 9999999),
+        width: 1024,
+        height: 768,
+      }),
+    });
+    clearTimeout(tid);
+    if (!res.ok) return null;
+    const data = await res.json();
+    // SDXL returns base64 artifacts
+    const b64 = data?.artifacts?.[0]?.base64;
+    if (b64) {
+      return `data:image/png;base64,${b64}`;
+    }
+    return null;
+  } catch (e) {
+    console.warn('NVIDIA SDXL failed:', e.message);
+    return null;
+  }
+}
+
+// ==========================================
+// TEXT AI — NVIDIA NIM → puter.js → Pollinations
 // ==========================================
 
 async function callPuterAI(prompt) {
+  // 1. Try NVIDIA NIM (Llama 3.3 70B) — best quality
+  const nvidiaResult = await callNvidiaAI(prompt);
+  if (nvidiaResult) return nvidiaResult;
+
+  // 2. Try puter.js GPT-4o-mini
   try {
-    // puter.js is loaded via CDN in index.html — check if available
     if (typeof window !== 'undefined' && window.puter && window.puter.ai) {
       const response = await window.puter.ai.chat(prompt, {
         model: 'gpt-4o-mini',
@@ -171,13 +257,13 @@ async function callPuterAI(prompt) {
       const text = typeof response === 'string'
         ? response
         : response?.message?.content || response?.choices?.[0]?.message?.content || '';
-      return text.trim() || null;
+      if (text.trim().length > 5) return text.trim();
     }
   } catch (e) {
     console.warn('puter.ai failed:', e.message);
   }
 
-  // Fallback: Pollinations GET (simple, may work when not rate-limited)
+  // 3. Fallback: Pollinations text
   try {
     const seed = Math.floor(Math.random() * 99999999);
     const controller = new AbortController();
@@ -189,9 +275,8 @@ async function callPuterAI(prompt) {
     clearTimeout(tid);
     if (res.ok) {
       const t = (await res.text()).trim();
-      // Strip preambles
       const cleaned = t
-        .replace(/^(Ось|Звичайно|Ок,?\s*ось|Тут|Ваш|Готово)[^\n:]*[:\n]\s*/i, '')
+        .replace(/^(Ось|Звичайно|Ок,?\s*ось|Тут|Ваш|Готово)[^\n:]*([:  \n]\s*)/i, '')
         .replace(/[\"\'*#]/g, '')
         .trim();
       if (cleaned.length > 5) return cleaned;
@@ -348,29 +433,52 @@ export function generateAiImage(country, cityOrHotel) {
   const cleanCity = (engCity || '').toLowerCase().trim();
   const cleanCountry = (engCountry || '').toLowerCase().trim();
 
-  // Try curated Unsplash first
+  // Try curated Unsplash first (always reliable, no AI needed)
   let photoIds = unsplashPhotos[cleanCity] || unsplashPhotos[cleanCountry] || null;
 
-  // 60% chance to use curated photo if available (guarantees variety on repeated clicks)
-  if (photoIds && photoIds.length > 0 && Math.random() < 0.6) {
+  if (photoIds && photoIds.length > 0) {
     const id = photoIds[Math.floor(Math.random() * photoIds.length)];
     return getUnsplashUrl(id) + `&sig=${Math.floor(Math.random() * 999999)}`;
   }
 
-  // Fallback: Pollinations Flux AI image (works for any destination)
+  // Fallback: Unsplash search URL (reliable, no AI, good quality)
+  const locationStr = [engCity, engCountry].filter(Boolean).join(' ');
+  const searchTerms = [
+    `${locationStr} travel landscape`,
+    `${locationStr} tourism`,
+    `${locationStr} beautiful scenery`,
+    `${locationStr} aerial view`,
+  ];
+  const searchTerm = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+  const seed = Math.floor(Math.random() * 999999);
+  // Unsplash source API — always returns a real photo, no API key needed
+  return `https://source.unsplash.com/1200x800/?${encodeURIComponent(searchTerm)}&${seed}`;
+}
+
+// ==========================================
+// NVIDIA SDXL IMAGE GENERATION (requires API key)
+// Call this when user clicks the AI button
+// ==========================================
+
+export async function generateNvidiaImage(country, cityOrHotel) {
+  const engCountry = translate(country);
+  const engCity = translate(cityOrHotel);
   const locationStr = [engCity, engCountry].filter(Boolean).join(', ');
+
   const styles = [
-    'professional travel photography of',
-    'stunning golden hour landscape of',
-    'breathtaking travel magazine photo of',
-    'scenic panoramic view of',
+    'stunning travel photography of',
+    'breathtaking golden hour landscape of',
+    'professional travel magazine photo of',
+    'aerial panoramic view of',
     'luxury vacation photography of',
-    'vibrant colorful cityscape of',
-    'dreamy aerial photography of',
   ];
   const style = styles[Math.floor(Math.random() * styles.length)];
-  const query = `${style} ${locationStr}, 4K ultra HD, photorealistic, vibrant colors, professional lighting, travel magazine quality`;
-  const seed = Math.floor(Math.random() * 99999999);
+  const prompt = `${style} ${locationStr}, ultra HD, photorealistic, vivid colors, professional lighting, travel magazine quality, no people`;
 
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(query)}?width=1200&height=800&nologo=true&seed=${seed}&model=flux`;
+  // Try NVIDIA SDXL first
+  const nvidiaImg = await generateNvidiaSDXLImage(prompt);
+  if (nvidiaImg) return nvidiaImg;
+
+  // Fallback to Unsplash
+  return generateAiImage(country, cityOrHotel);
 }
