@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, ArrowLeft, Check, X, Search, GripVertical, Upload } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Check, X, Search, GripVertical } from 'lucide-react'
+import ImageInput from '../../components/ImageInput'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { Helmet } from 'react-helmet-async'
@@ -108,7 +109,7 @@ export default function AdminAviatury() {
   const [editingAviatur, setEditingAviatur] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [generatingAiTitle, setGeneratingAiTitle] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
+  // uploadingImage removed — handled inside ImageInput component
   const [formData, setFormData] = useState({
     name: '',
     country: '',
@@ -354,28 +355,7 @@ export default function AdminAviatury() {
     setEditingAviatur(null)
   }
 
-  const handleFileUpload = async (file) => {
-    if (!file) return
-    setUploadingImage(true)
-    try {
-      const fd = new FormData()
-      fd.append('image', file)
-      const res = await api.post('/upload', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      const url = res?.data?.path || res?.data?.url
-      if (url) {
-        setFormData(prev => ({ ...prev, image: url }))
-        toast.success('Зображення завантажено')
-      } else {
-        toast.error('Не вдалося отримати URL зображення')
-      }
-    } catch (e) {
-      toast.error('Помилка завантаження зображення')
-    } finally {
-      setUploadingImage(false)
-    }
-  }
+  // handleFileUpload removed — handled inside ImageInput component
 
   const handleArrayChange = (field, index, value) => {
     const newArray = [...formData[field]]
@@ -630,58 +610,11 @@ export default function AdminAviatury() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Зображення *</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value.trim() })}
-                    placeholder={uploadingImage ? 'Завантаження...' : 'https://... або /uploads/xxxxx.jpg'}
-                    readOnly={uploadingImage}
-                    className={`w-full px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold ${
-                      uploadingImage ? 'opacity-60 cursor-wait' : ''
-                    }`}
-                  />
-                  <div className="flex gap-2">
-                    <label className={`flex-1 cursor-pointer bg-luxury-gold/10 hover:bg-luxury-gold/20 text-luxury-gold px-4 py-2 rounded-lg border border-luxury-gold/30 flex items-center justify-center gap-2 transition-all ${
-                      uploadingImage ? 'opacity-50 pointer-events-none' : ''
-                    }`}>
-                      {uploadingImage ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4 text-luxury-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                          </svg>
-                          Завантаження...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 text-luxury-gold" />
-                          Обрати файл
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        disabled={uploadingImage}
-                        onChange={(e) => handleFileUpload(e.target.files?.[0])}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleGenerateAiImageClick}
-                      disabled={generatingAiImageState}
-                      className="px-4 py-2 bg-luxury-gold text-luxury-dark hover:bg-luxury-gold-light disabled:opacity-50 font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-lg shadow-luxury-gold/10"
-                    >
-                      {generatingAiImageState ? 'Генерація...' : '✨ AI Фото'}
-                    </button>
-                  </div>
-                </div>
-                {formData.image && (
-                  <img src={formData.image} alt="Preview" className="mt-2 h-32 w-full object-cover rounded-lg" />
-                )}
-                <p className="text-xs text-gray-500 mt-1">Можна вставити URL або завантажити файл (jpeg/png/webp, до 8MB)</p>
+                <ImageInput
+                  value={formData.image}
+                  onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                  label="Зображення *"
+                />
               </div>
 
               <div>

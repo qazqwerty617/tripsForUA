@@ -370,6 +370,9 @@ func main() {
 		// Upload route
 		api.POST("/upload", Protect(), Admin(), UploadHandler)
 
+		// Import image from URL (Google, Pinterest, etc.)
+		api.POST("/import-image", Protect(), Admin(), ImportImageHandler)
+
 		// Analytics routes
 		analytics := api.Group("/analytics")
 		{
