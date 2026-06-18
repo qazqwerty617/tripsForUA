@@ -21,11 +21,7 @@ export default function Footer() {
                 </Link>
               </li>
 
-              <li>
-                <a href="/#tours" className="text-gray-400 hover:text-primary-400 transition">
-                  Календар турів
-                </a>
-              </li>
+
               <li>
                 <a href="/#about" className="text-gray-400 hover:text-primary-400 transition">
                   Про нас
@@ -58,7 +54,7 @@ export default function Footer() {
               <span className="text-2xl font-bold">Trips for Ukraine</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Це унікальний проєкт від нашої команди, де зібрані екскурсійні тури більшості провідних туроператорів України в одному місці. Програми додаються та оновлюються.
+              Усі напрямки доступні для індивідуального розрахунку з будь-якого міста Європи. Перелік програм постійно оновлюється. Чекаємо на підбір туру!
             </p>
           </div>
         </div>

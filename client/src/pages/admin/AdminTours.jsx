@@ -155,12 +155,24 @@ export default function AdminTours() {
       return
     }
     setGeneratingAiImageState(true)
+    const toastId = toast.loading('AI генерує та оптимізує найкраще фото...')
     try {
       const imgUrl = generateAiImage(formData.country, formData.city || formData.fancyTitle || '')
-      updateArrayField('images', index, imgUrl)
-      toast.success('AI підібрав найкраще фото!')
+      
+      let finalUrl = imgUrl
+      try {
+        const res = await api.post('/import-image', { url: imgUrl })
+        if (res.data && (res.data.path || res.data.url)) {
+          finalUrl = res.data.path || res.data.url
+        }
+      } catch (importErr) {
+        console.warn('Could not import generated image to server, using direct URL:', importErr)
+      }
+
+      updateArrayField('images', index, finalUrl)
+      toast.success('AI підібрав та зберіг найкраще фото!', { id: toastId })
     } catch (error) {
-      toast.error('Помилка підбору фото')
+      toast.error('Помилка підбору фото', { id: toastId })
     } finally {
       setGeneratingAiImageState(false)
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { MapPin, Users, Star, ArrowRight, Check, X, Globe, Calendar, Clock, Plus } from 'lucide-react'
+import { MapPin, Users, Star, ArrowRight, Check, X, Globe, Calendar, Clock, Plus, Search } from 'lucide-react'
 import api from '../utils/api'
 
 
@@ -18,6 +18,8 @@ export default function Home() {
   const [resortFilter, setResortFilter] = useState(() => searchParams.get('resortFilter') || 'all')
   const [tourSort, setTourSort] = useState(() => searchParams.get('tourSort') || 'all')
   const [showAllTours, setShowAllTours] = useState(() => searchParams.get('showAllTours') === 'true')
+  const [tourSearchQuery, setTourSearchQuery] = useState(() => searchParams.get('tourSearch') || '')
+  const [aviaturSearchQuery, setAviaturSearchQuery] = useState(() => searchParams.get('aviaturSearch') || '')
 
   useEffect(() => {
     fetchData()
@@ -64,38 +66,86 @@ export default function Home() {
     if (resortFilter !== 'all') params.set('resortFilter', resortFilter)
     if (showAllAviatury) params.set('showAllAviatury', 'true')
     if (tourSort !== 'all') params.set('tourSort', tourSort)
+    if (tourSearchQuery.trim()) params.set('tourSearch', tourSearchQuery.trim())
+    if (aviaturSearchQuery.trim()) params.set('aviaturSearch', aviaturSearchQuery.trim())
 
     setSearchParams(params, { replace: true })
-  }, [showAllTours, resortFilter, showAllAviatury, tourSort, setSearchParams])
+  }, [showAllTours, resortFilter, showAllAviatury, tourSort, tourSearchQuery, aviaturSearchQuery, setSearchParams])
 
-  // Show tours (all or first 6)
+  const filteredTours = useMemo(() => {
+    if (!allTours) return []
+    let result = [...allTours]
+
+    if (tourSearchQuery.trim()) {
+      const query = tourSearchQuery.toLowerCase().trim()
+      result = result.filter(tour => {
+        const country = (tour.country || '').toLowerCase()
+        const city = (tour.city || '').toLowerCase()
+        const title = (tour.title || '').toLowerCase()
+        const fancyTitle = (tour.fancyTitle || '').toLowerCase()
+        const destinationName = (tour.destination?.name || '').toLowerCase()
+        const destinationNameUk = (tour.destination?.nameUk || '').toLowerCase()
+
+        return country.includes(query) ||
+               city.includes(query) ||
+               title.includes(query) ||
+               fancyTitle.includes(query) ||
+               destinationName.includes(query) ||
+               destinationNameUk.includes(query)
+      })
+    }
+
+    return result
+  }, [allTours, tourSearchQuery])
+
+  // Show tours (all or first 6 when not searching)
   useEffect(() => {
-    if (allTours.length > 0) {
-      setTours(showAllTours ? allTours : allTours.slice(0, 6))
+    if (filteredTours.length > 0) {
+      if (tourSearchQuery.trim()) {
+        setTours(filteredTours)
+      } else {
+        setTours(showAllTours ? filteredTours : filteredTours.slice(0, 6))
+      }
     } else {
       setTours([])
     }
-  }, [showAllTours, allTours])
+  }, [showAllTours, filteredTours, tourSearchQuery])
 
   // Filter/sort aviatury
   useEffect(() => {
     if (allAviatury.length > 0) {
-      let sorted = [...allAviatury]
+      let filtered = [...allAviatury]
+
+      if (aviaturSearchQuery.trim()) {
+        const query = aviaturSearchQuery.toLowerCase().trim()
+        filtered = filtered.filter(item => {
+          const country = (item.country || '').toLowerCase()
+          const name = (item.name || '').toLowerCase()
+          const title = (item.title || '').toLowerCase()
+          const description = (item.description || '').toLowerCase()
+
+          return country.includes(query) ||
+                 name.includes(query) ||
+                 title.includes(query) ||
+                 description.includes(query)
+        })
+      }
+
       if (tourSort === 'bestseller') {
         // hot items first, then sort by views or keep order
-        sorted = sorted.sort((a, b) => {
+        filtered = filtered.sort((a, b) => {
           if (a.hot && !b.hot) return -1
           if (!a.hot && b.hot) return 1
           return 0
         })
       } else if (tourSort === 'cheapest') {
-        sorted = sorted.sort((a, b) => (a.price || 0) - (b.price || 0))
+        filtered = filtered.sort((a, b) => (a.price || 0) - (b.price || 0))
       }
-      setAviatury(sorted)
+      setAviatury(filtered)
     } else {
       setAviatury([])
     }
-  }, [tourSort, allAviatury])
+  }, [tourSort, allAviatury, aviaturSearchQuery])
 
   return (
     <div className="bg-[#0f0f0f]">
@@ -118,7 +168,7 @@ export default function Home() {
               TRIPS<br />FOR UKRAINE
             </h1>
             <p className="text-base md:text-xl mb-8 text-gray-400 max-w-2xl animate-fade-in-up">
-              Унікальний проєкт від нашої команди з добірками ексклюзивних та екскурсійних турів від провідних туроператорів України в одному місці. Зручно, швидко та вигідно.
+              Туристичний проєкт, якому довіряють понад 200 тисяч українців. Відправляємо в подорожі з будь-якого міста Європи — обирай свій наступний напрямок нижче!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -174,27 +224,62 @@ export default function Home() {
       <section className="py-20 bg-luxury-dark-lighter" id="tours">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Екскурсійні тури</h2>
-            <p className="text-xl text-gray-400">Авіарейси, трансфер, готель, харчування, вся програма туру</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-luxury-gold">Екскурсійні тури</h2>
+            <p className="text-base md:text-xl text-gray-400">Авіарейси, трансфер, готель, харчування, вся програма туру</p>
           </div>
 
           {/* Info block */}
           <div className="glass rounded-2xl px-8 py-6 mb-10">
-            <p className="text-gray-300 text-lg leading-relaxed text-center">
-              <span className="text-luxury-gold font-semibold">Унікальний формат подорожі</span>, де комфорт поєднується з найяскравішими локаціями. Дати, готель і місто вильоту — обираєте самостійно. Програми продумані так, щоб побачити все найголовніше — і в той же час, без поспіху, насолоджуватись курортним відпочинком!
+            <p className="text-gray-300 text-sm md:text-lg leading-relaxed text-center">
+              <span className="text-luxury-gold font-semibold">Курортна відпустка нового формату</span>. Поєднання комфортного відпочинку та найяскравіших вражень в одній подорожі. Без груп, фіксованих дат і жорстких графіків. Обирайте програму, напишіть бажані дати та місто вильоту — і отримайте індивідуальну пропозицію саме для вас.
             </p>
           </div>
 
+          {/* Пошук туру */}
+          <div className="max-w-2xl mx-auto mb-10 px-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-luxury-gold" />
+              <input
+                type="text"
+                value={tourSearchQuery}
+                onChange={(e) => setTourSearchQuery(e.target.value)}
+                placeholder="Куди ви бажаєте поїхати? (країна або курорт...)"
+                className="w-full pl-12 pr-12 py-3.5 bg-luxury-dark-card border border-luxury-gold/30 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-luxury-gold focus:border-transparent placeholder-gray-500 shadow-[0_0_20px_rgba(212,175,55,0.05)] text-base md:text-lg transition duration-300"
+              />
+              {tourSearchQuery && (
+                <button
+                  onClick={() => setTourSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-white transition"
+                  aria-label="Очистити пошук"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {tours.length === 0 && !loading && (
-            <div className="text-center py-16 glass rounded-2xl mb-8">
-              <div className="text-5xl mb-4">✈️</div>
-              <p className="text-gray-400 text-lg">Наразі немає доступних екскурсійних турів</p>
-              <p className="text-gray-500 text-sm mt-2">Слідкуйте за оновленнями — нові тури з'являться скоро!</p>
+            <div className="text-center py-16 glass rounded-2xl mb-8 max-w-2xl mx-auto">
+              <div className="text-5xl mb-4">{tourSearchQuery ? '🔍' : '✈️'}</div>
+              <p className="text-gray-300 text-lg font-medium">
+                {tourSearchQuery ? `Нічого не знайдено за запитом "${tourSearchQuery}"` : 'Наразі немає доступних екскурсійних турів'}
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                {tourSearchQuery ? 'Спробуйте змінити запит або перевірити правопис.' : 'Слідкуйте за оновленнями — нові тури з\'являться скоро!'}
+              </p>
+              {tourSearchQuery && (
+                <button
+                  onClick={() => setTourSearchQuery('')}
+                  className="mt-6 px-6 py-2 border border-luxury-gold/50 text-luxury-gold rounded-full font-semibold hover:bg-luxury-gold/10 transition text-sm"
+                >
+                  Скинути пошук
+                </button>
+              )}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(showAllTours ? tours : tours.slice(0, 6)).map((tour, index) => (
+            {tours.map((tour, index) => (
               <Link key={tour._id} to={`/tours/${tour._id}`} className="bg-luxury-dark-card rounded-xl overflow-hidden shadow-lg border border-luxury-gold/20 hover:border-luxury-gold/50 transition group hover-lift">
                 <div className="relative h-64">
                   <img
@@ -230,7 +315,7 @@ export default function Home() {
             ))}
           </div>
 
-          {!showAllTours && tours.length >= 6 && (
+          {!showAllTours && !tourSearchQuery.trim() && tours.length >= 6 && (
             <div className="text-center mt-12">
               <button
                 onClick={() => setShowAllTours(true)}
@@ -247,58 +332,90 @@ export default function Home() {
       <section className="py-20 bg-luxury-dark" id="aviatury">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Стандартні тури</h2>
-            <p className="text-xl text-gray-300">Авіарейси, готель, харчування, страхування, путівник, онлайн-підтримка 24/7</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-luxury-gold">Стандартні тури</h2>
+            <p className="text-base md:text-xl text-gray-300">Авіарейси, готель, харчування, страхування, путівник, онлайн-підтримка 24/7</p>
           </div>
 
-          {/* Фільтр/сортування */}
-          <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-4 mb-6">
-            <div className="flex flex-wrap gap-3 justify-center">
+          {/* Пошук та Фільтри */}
+          <div className="bg-luxury-dark-card border border-luxury-gold/20 rounded-xl p-6 mb-8 max-w-4xl mx-auto space-y-4 text-center">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-luxury-gold" />
+              <input
+                type="text"
+                value={aviaturSearchQuery}
+                onChange={(e) => setAviaturSearchQuery(e.target.value)}
+                placeholder="Пошук стандартного туру за країною, курортом або назвою..."
+                className="w-full pl-12 pr-12 py-3 bg-luxury-dark border border-luxury-gold/30 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-luxury-gold focus:border-transparent placeholder-gray-500 shadow-md text-base transition duration-300"
+              />
+              {aviaturSearchQuery && (
+                <button
+                  onClick={() => setAviaturSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-white transition"
+                  aria-label="Очистити пошук"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-3 justify-center pt-2">
               <button
                 onClick={() => setTourSort('all')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'all'
-                  ? 'bg-luxury-gold text-luxury-dark'
+                className={`px-6 py-2.5 rounded-full font-semibold text-sm transition ${tourSort === 'all'
+                  ? 'bg-luxury-gold text-luxury-dark shadow-md'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                Всі тури
+                Всі пропозиції
               </button>
               <button
                 onClick={() => setTourSort('bestseller')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'bestseller'
-                  ? 'bg-luxury-gold text-luxury-dark'
+                className={`px-6 py-2.5 rounded-full font-semibold text-sm transition ${tourSort === 'bestseller'
+                  ? 'bg-luxury-gold text-luxury-dark shadow-md'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                🔥 Бестселлер
+                🔥 Бестселлери
               </button>
               <button
                 onClick={() => setTourSort('cheapest')}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${tourSort === 'cheapest'
-                  ? 'bg-luxury-gold text-luxury-dark'
+                className={`px-6 py-2.5 rounded-full font-semibold text-sm transition ${tourSort === 'cheapest'
+                  ? 'bg-luxury-gold text-luxury-dark shadow-md'
                   : 'border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10'
                   }`}
               >
-                💰 Найвигідніший
+                💰 Спочатку вигідні
               </button>
             </div>
-            {tourSort !== 'all' && (
-              <p className="text-sm text-gray-400 mt-3 text-center">
+            {(tourSort !== 'all' || aviaturSearchQuery.trim()) && (
+              <p className="text-sm text-gray-400 text-center pt-1">
                 Знайдено: <span className="text-luxury-gold font-semibold">{aviatury.length}</span> {aviatury.length === 0 ? 'турів' : aviatury.length === 1 ? 'тур' : aviatury.length < 5 ? 'тури' : 'турів'}
               </p>
             )}
           </div>
 
           {aviatury.length === 0 && !loading && (
-            <div className="text-center py-16 glass rounded-2xl mb-8">
-              <div className="text-5xl mb-4">🌴</div>
-              <p className="text-gray-400 text-lg">Наразі немає доступних стандартних турів</p>
-              <p className="text-gray-500 text-sm mt-2">Нові пропозиції додаються регулярно</p>
+            <div className="text-center py-16 glass rounded-2xl mb-8 max-w-2xl mx-auto">
+              <div className="text-5xl mb-4">{aviaturSearchQuery ? '🔍' : '🌴'}</div>
+              <p className="text-gray-300 text-lg font-medium">
+                {aviaturSearchQuery ? `Нічого не знайдено за запитом "${aviaturSearchQuery}"` : 'Наразі немає доступних стандартних турів'}
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                {aviaturSearchQuery ? 'Спробуйте змінити запит або перевірити правопис.' : 'Нові пропозиції додаються регулярно.'}
+              </p>
+              {aviaturSearchQuery && (
+                <button
+                  onClick={() => setAviaturSearchQuery('')}
+                  className="mt-6 px-6 py-2 border border-luxury-gold/50 text-luxury-gold rounded-full font-semibold hover:bg-luxury-gold/10 transition text-sm"
+                >
+                  Скинути пошук
+                </button>
+              )}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(showAllAviatury ? aviatury : aviatury.slice(0, 12)).map((aviatur, index) => (
+            {((showAllAviatury || aviaturSearchQuery.trim()) ? aviatury : aviatury.slice(0, 12)).map((aviatur, index) => (
               <button
                 key={aviatur._id}
                 onClick={() => {
@@ -358,7 +475,7 @@ export default function Home() {
             ))}
           </div>
 
-          {!showAllAviatury && aviatury.length > 12 && (
+          {!showAllAviatury && !aviaturSearchQuery.trim() && aviatury.length > 12 && (
             <div className="text-center mt-12">
               <button
                 onClick={() => setShowAllAviatury(true)}
@@ -376,7 +493,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6 text-luxury-gold">Чому обирають нас?</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-luxury-gold">Чому обирають нас?</h2>
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-12 h-12 bg-luxury-gold/20 rounded-full flex items-center justify-center">
@@ -439,8 +556,8 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-luxury-dark-lighter via-luxury-dark to-black border-t border-luxury-gold/20 text-white" id="contact">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Готові до пригод?</h2>
-          <p className="text-xl mb-8 text-gray-300">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-luxury-gold">Готові до пригод?</h2>
+          <p className="text-base md:text-xl mb-8 text-gray-300">
             Звʼяжіться з нами у зручному месенджері та отримайте індивідуальну пропозицію!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

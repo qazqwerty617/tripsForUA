@@ -175,12 +175,24 @@ export default function AdminAviatury() {
       return
     }
     setGeneratingAiImageState(true)
+    const toastId = toast.loading('AI генерує та оптимізує найкраще фото...')
     try {
       const imgUrl = generateAiImage(formData.country, formData.name || '')
-      setFormData(prev => ({ ...prev, image: imgUrl }))
-      toast.success('AI підібрав найкраще фото!')
+      
+      let finalUrl = imgUrl
+      try {
+        const res = await api.post('/import-image', { url: imgUrl })
+        if (res.data && (res.data.path || res.data.url)) {
+          finalUrl = res.data.path || res.data.url
+        }
+      } catch (importErr) {
+        console.warn('Could not import generated image to server, using direct URL:', importErr)
+      }
+
+      setFormData(prev => ({ ...prev, image: finalUrl }))
+      toast.success('AI підібрав та зберіг найкраще фото!', { id: toastId })
     } catch (error) {
-      toast.error('Помилка підбору фото')
+      toast.error('Помилка підбору фото', { id: toastId })
     } finally {
       setGeneratingAiImageState(false)
     }

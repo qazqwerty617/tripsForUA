@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, X } from 'lucide-react'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { countriesData } from '../../utils/countriesData'
-import { generateAiDescription } from '../../utils/aiHelper'
+import { generateAiDescription, generateAiImage } from '../../utils/aiHelper'
+import ImageInput from '../../components/ImageInput'
 
 export default function AdminDestinations() {
   const [destinations, setDestinations] = useState([])

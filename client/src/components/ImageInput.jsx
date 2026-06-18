@@ -78,6 +78,32 @@ export default function ImageInput({ value, onChange, label = 'Зображен�
     }
   }
 
+  // Insert URL directly as-is (bypass server download/conversion)
+  const handleDirectInsert = () => {
+    const url = urlInput.trim()
+    if (!url) {
+      toast.error('Введіть URL зображення')
+      return
+    }
+    onChange(url)
+    setUrlInput('')
+    setMode('idle')
+    toast.success('✅ Посилання додано!')
+  }
+
+  const handleToggleUrlInput = () => {
+    if (mode === 'url-input') {
+      setMode('idle')
+    } else {
+      setMode('url-input')
+      if (value && value.startsWith('http')) {
+        setUrlInput(value)
+      } else {
+        setUrlInput('')
+      }
+    }
+  }
+
   const handleClear = () => {
     onChange('')
     setMode('idle')
@@ -123,7 +149,7 @@ export default function ImageInput({ value, onChange, label = 'Зображен�
         <button
           type="button"
           disabled={isLoading || disabled}
-          onClick={() => setMode(m => m === 'url-input' ? 'idle' : 'url-input')}
+          onClick={handleToggleUrlInput}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium text-sm transition-all
             ${mode === 'url-input'
               ? 'bg-blue-500/20 border-blue-400/50 text-blue-300'
@@ -185,6 +211,14 @@ export default function ImageInput({ value, onChange, label = 'Зображен�
                   Імпортувати
                 </>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={handleDirectInsert}
+              disabled={mode === 'importing' || !urlInput.trim()}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-all"
+            >
+              Вставити як є
             </button>
           </div>
           <p className="text-xs text-gray-500">

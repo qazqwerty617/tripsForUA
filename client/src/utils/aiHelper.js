@@ -342,6 +342,28 @@ export function generateSmartTourTitle(country, city) {
   return templates[Math.floor(Math.random() * templates.length)];
 }
 
+export function cleanAiResponse(text) {
+  if (!text) return '';
+  let cleaned = text.trim();
+  
+  // Remove markdown formatting
+  cleaned = cleaned.replace(/[*#_`~]/g, '');
+
+  // Remove common AI preambles in Russian, Ukrainian, and English
+  const preambles = [
+    /^(ось|звичайно|готово|опис|назва|тур|ось ваш|ось опис|ось назва|ось тур|тут)[^\n:]*[:\-\s\n]+/i,
+    /^(here is|sure|of course|ready|description|title|tour|here is your)[^\n:]*[:\-\s\n]+/i
+  ];
+  for (const regex of preambles) {
+    cleaned = cleaned.replace(regex, '');
+  }
+
+  // Remove leading/trailing quotes
+  cleaned = cleaned.replace(/^["'«»“”„’`\s]+|["'«»“”„’`\s]+$/g, '');
+
+  return cleaned.trim();
+}
+
 export async function generateAiTitle(country, city) {
   const fallback = generateSmartTourTitle(country, city);
   if (!country) return fallback;
@@ -350,14 +372,23 @@ export async function generateAiTitle(country, city) {
   const engCity = translate(city);
   const place = engCity && engCity !== engCountry ? `${engCity}, ${engCountry}` : engCountry;
 
-  const styles = ['romantic','majestic and premium','adventurous','poetic','luxurious and elegant','dreamy'];
+  const styles = [
+    'romantic and poetic',
+    'majestic, premium and elite',
+    'adventurous and exciting',
+    'luxurious, elegant and exclusive',
+    'dreamy and fairy-tale'
+  ];
   const style = styles[Math.floor(Math.random() * styles.length)];
 
-  const prompt = `You are a travel copywriter. Create ONE short catchy tour title for "${place}" (3-5 words max). Style: ${style}. Reply ONLY with the title in Ukrainian. No quotes, no punctuation.`;
+  const prompt = `You are a professional travel copywriter. Create ONE extremely catchy and premium tour title for "${place}" (3-5 words maximum). Style: ${style}. The title must be in Ukrainian language, natural, appealing, and professional. Reply ONLY with the title. Do not include any quotes, preamble, intro, or explanations.`;
 
   const result = await callPuterAI(prompt);
-  if (result && result.length > 3 && result.length < 80 && !result.includes('http')) {
-    return result;
+  if (result) {
+    const cleaned = cleanAiResponse(result);
+    if (cleaned.length > 3 && cleaned.length < 80 && !cleaned.includes('http')) {
+      return cleaned;
+    }
   }
   return fallback;
 }
@@ -376,18 +407,24 @@ export async function generateAiDescription(destinationName) {
 
   const engName = translate(destinationName);
   const angles = [
-    'romantic atmosphere and golden sunsets','historical landmarks and architecture',
-    'local cuisine and vibrant culture','stunning nature, beaches and landscapes',
-    'exciting adventures and excursions','peaceful relaxation and harmony',
+    'romantic atmosphere, luxury, and gorgeous sunsets',
+    'historical landmarks, majestic architecture, and rich heritage',
+    'local gourmet cuisine, authentic culture, and warm hospitality',
+    'stunning untouched nature, picturesque beaches, and breathtaking landscapes',
+    'exciting premium adventures, exclusive excursions, and discoveries',
+    'peaceful relaxation, harmony, premium wellness, and inner peace',
   ];
   const angle = angles[Math.floor(Math.random() * angles.length)];
-  const tones = ['luxurious','poetic','warm and inviting','inspirational'];
+  const tones = ['luxurious and elegant', 'poetic and deep', 'warm and inviting', 'inspirational and premium'];
   const tone = tones[Math.floor(Math.random() * tones.length)];
 
-  const prompt = `You are an elite travel copywriter. Write a beautiful 2-3 sentence description for destination "${engName}". Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian ONLY. Start directly with text, no preamble, no quotes.`;
+  const prompt = `You are an elite travel copywriter. Write a beautiful, premium 2-3 sentence description for the destination "${engName}" to inspire high-end travelers. Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian language ONLY, using rich, natural, and appealing vocabulary. Start directly with the text. Do not include any quotes, intro, preamble, or markdown formatting.`;
 
   const result = await callPuterAI(prompt);
-  if (result && result.length > 25 && !result.includes('http')) return result;
+  if (result) {
+    const cleaned = cleanAiResponse(result);
+    if (cleaned.length > 25 && !cleaned.includes('http')) return cleaned;
+  }
   return fallback;
 }
 
@@ -406,18 +443,23 @@ export async function generateAiTourDescription(country, city, title) {
   const engPlace = engCity && engCity !== engCountry ? `${engCity}, ${engCountry}` : engCountry;
 
   const angles = [
-    'historical landmarks and architecture','scenic panoramas and landscapes',
-    'local culture and cuisine','comfortable premium experience',
-    'active excursions and sightseeing',
+    'grand historical landmarks, stunning architecture, and local legends',
+    'scenic panoramas, breathtaking landscapes, and photography spots',
+    'immersion into local culture, traditions, and exquisite cuisine',
+    'comfortable premium experience, luxury accommodations, and worries-free travel',
+    'active excursions, expert sightseeing, and hidden local gems',
   ];
   const angle = angles[Math.floor(Math.random() * angles.length)];
-  const tones = ['premium and elegant','emotional and inspiring','romantic'];
+  const tones = ['premium and elegant', 'emotional, inspiring, and vivid', 'romantic and dreamy'];
   const tone = tones[Math.floor(Math.random() * tones.length)];
 
-  const prompt = `You are a travel copywriter. Write a 3-4 sentence tour description for "${tourName}" in ${engPlace}. Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian ONLY. No quotes, no preamble, start directly.`;
+  const prompt = `You are a professional travel copywriter. Write a beautiful, rich 3-4 sentence tour description for the tour "${tourName}" in "${engPlace}". Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian language ONLY. Make it sound highly professional, appealing, and premium. Do not use quotes, preamble, or markdown formatting, start directly with the text.`;
 
   const result = await callPuterAI(prompt);
-  if (result && result.length > 30 && !result.includes('http')) return result;
+  if (result) {
+    const cleaned = cleanAiResponse(result);
+    if (cleaned.length > 30 && !cleaned.includes('http')) return cleaned;
+  }
   return fallback;
 }
 
@@ -435,17 +477,22 @@ export async function generateAiAviaturyDescription(country, name) {
   const engPlace = engName && engName !== engCountry ? `${engName}, ${engCountry}` : engCountry;
 
   const angles = [
-    'beach relaxation and warm turquoise sea','hotel luxury and all-inclusive comfort',
-    'exotic vibes and unforgettable impressions','fast flights and seamless travel experience',
+    'beach relaxation, warm turquoise sea, and golden sands',
+    'hotel luxury, all-inclusive comfort, and premium leisure activities',
+    'exotic vibes, vibrant local experiences, and unforgettable impressions',
+    'fast flights, premium transfers, and seamless premium travel experience',
   ];
   const angle = angles[Math.floor(Math.random() * angles.length)];
-  const tones = ['prestigious','relaxing and warm','dreamy and elegant'];
+  const tones = ['prestigious, elite, and exclusive', 'relaxing, peaceful, and warm', 'dreamy, elegant, and poetic'];
   const tone = tones[Math.floor(Math.random() * tones.length)];
 
-  const prompt = `You are a travel copywriter. Write a 3-4 sentence vacation package description for "${engPlace}". Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian ONLY. No quotes, no preamble, start directly.`;
+  const prompt = `You are an elite travel copywriter. Write a 3-4 sentence luxury vacation package description for "${engPlace}". Focus on: ${angle}. Tone: ${tone}. Write in Ukrainian language ONLY. It should feel extremely inviting, cozy, and high-end. No quotes, no intro, no markdown formatting, start directly.`;
 
   const result = await callPuterAI(prompt);
-  if (result && result.length > 30 && !result.includes('http')) return result;
+  if (result) {
+    const cleaned = cleanAiResponse(result);
+    if (cleaned.length > 30 && !cleaned.includes('http')) return cleaned;
+  }
   return fallback;
 }
 
@@ -468,30 +515,8 @@ export function generateAiImage(country, cityOrHotel) {
     return getUnsplashUrl(id) + `&sig=${Math.floor(Math.random() * 999999)}`;
   }
 
-  // Fallback: Unsplash search URL (reliable, no AI, good quality)
+  // Fallback: Pollinations AI Text-to-Image (stunning free image generator, works 100% of the time)
   const locationStr = [engCity, engCountry].filter(Boolean).join(' ');
-  const searchTerms = [
-    `${locationStr} travel landscape`,
-    `${locationStr} tourism`,
-    `${locationStr} beautiful scenery`,
-    `${locationStr} aerial view`,
-  ];
-  const searchTerm = searchTerms[Math.floor(Math.random() * searchTerms.length)];
-  const seed = Math.floor(Math.random() * 999999);
-  // Unsplash source API — always returns a real photo, no API key needed
-  return `https://source.unsplash.com/1200x800/?${encodeURIComponent(searchTerm)}&${seed}`;
-}
-
-// ==========================================
-// NVIDIA SDXL IMAGE GENERATION (requires API key)
-// Call this when user clicks the AI button
-// ==========================================
-
-export async function generateNvidiaImage(country, cityOrHotel) {
-  const engCountry = translate(country);
-  const engCity = translate(cityOrHotel);
-  const locationStr = [engCity, engCountry].filter(Boolean).join(', ');
-
   const styles = [
     'stunning travel photography of',
     'breathtaking golden hour landscape of',
@@ -500,12 +525,18 @@ export async function generateNvidiaImage(country, cityOrHotel) {
     'luxury vacation photography of',
   ];
   const style = styles[Math.floor(Math.random() * styles.length)];
-  const prompt = `${style} ${locationStr}, ultra HD, photorealistic, vivid colors, professional lighting, travel magazine quality, no people`;
+  const prompt = `${style} ${locationStr}, ultra HD, photorealistic, vivid colors, professional lighting, travel magazine quality, highly detailed, no text, no watermark`;
+  const seed = Math.floor(Math.random() * 9999999);
+  
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1200&height=800&nologo=true&seed=${seed}`;
+}
 
-  // Try NVIDIA SDXL first
-  const nvidiaImg = await generateNvidiaSDXLImage(prompt);
-  if (nvidiaImg) return nvidiaImg;
+// ==========================================
+// NVIDIA SDXL IMAGE GENERATION (requires API key)
+// Call this when user clicks the AI button
+// ==========================================
 
-  // Fallback to Unsplash
+export async function generateNvidiaImage(country, cityOrHotel) {
+  // Direct fallback to generateAiImage (Unsplash/Pollinations) as Nvidia SDXL cloud NIM is not available
   return generateAiImage(country, cityOrHotel);
 }
