@@ -4,6 +4,7 @@ import { Calendar, MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'luci
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import ReviewsSection from '../components/ReviewsSection'
 
 
 export default function Home() {
@@ -41,10 +42,6 @@ export default function Home() {
   // useMemo щоб перераховувати тільки коли allTours змінюється
   const { minTourDate, maxTourDate } = useMemo(() => {
     if (allTours.length === 0) return { minTourDate: '', maxTourDate: '' }
-    const todayDate = new Date(today)
-    todayDate.setHours(0, 0, 0, 0)
-
-    // Collect all dates from tours (availableDates or startDate)
     const allDates = []
     allTours.forEach(t => {
       if (t.availableDates && t.availableDates.length > 0) {
@@ -52,14 +49,14 @@ export default function Home() {
           const date = new Date(d)
           if (!isNaN(date.getTime())) {
             date.setHours(0, 0, 0, 0)
-            if (date >= todayDate) allDates.push(date)
+            allDates.push(date)
           }
         })
       } else if (t.startDate) {
         const date = new Date(t.startDate)
         if (!isNaN(date.getTime())) {
           date.setHours(0, 0, 0, 0)
-          if (date >= todayDate) allDates.push(date)
+          allDates.push(date)
         }
       }
     })
@@ -78,36 +75,31 @@ export default function Home() {
     try {
       if (!isTour) return true;
 
-      const todayDate = new Date();
-      todayDate.setHours(0, 0, 0, 0);
+      // Collect all dates from the tour
+      let itemDates = [];
 
-      // Collect all FUTURE dates from the tour
-      let futureDates = [];
-
-      // Priority 1: Use availableDates if they exist
+      // Use availableDates if they exist
       if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
-        futureDates = item.availableDates
-          .map(d => {
-            const date = new Date(d);
-            date.setHours(0, 0, 0, 0);
-            return date;
-          })
-          .filter(d => !isNaN(d.getTime()) && d >= todayDate);
+        itemDates = item.availableDates
+          .map(d => new Date(d))
+          .filter(d => !isNaN(d.getTime()));
       }
 
-      // Priority 2: Fall back to startDate if no availableDates
-      if (futureDates.length === 0 && item.startDate) {
+      // Fall back to startDate if no availableDates
+      if (itemDates.length === 0 && item.startDate) {
         const startDate = new Date(item.startDate);
-        startDate.setHours(0, 0, 0, 0);
-        if (!isNaN(startDate.getTime()) && startDate >= todayDate) {
-          futureDates = [startDate];
+        if (!isNaN(startDate.getTime())) {
+          itemDates = [startDate];
         }
       }
 
-      // No future dates = tour not available
-      if (futureDates.length === 0) return false;
+      // No dates at all = tour not available
+      if (itemDates.length === 0) return false;
 
-      // If no filter applied, show all tours with future dates
+      // Ensure all dates are at 00:00:00 for comparison
+      itemDates.forEach(d => d.setHours(0, 0, 0, 0));
+
+      // If no filter applied, show all tours
       if (!dateFrom && !dateTo) return true;
 
       // Parse filter dates
@@ -116,8 +108,8 @@ export default function Home() {
       if (fromDate) fromDate.setHours(0, 0, 0, 0);
       if (toDate) toDate.setHours(0, 0, 0, 0);
 
-      // Check if any future date falls within the range
-      return futureDates.some(d => {
+      // Check if any tour date falls within the range
+      return itemDates.some(d => {
         if (fromDate && toDate) {
           return d >= fromDate && d <= toDate;
         } else if (fromDate) {
@@ -565,6 +557,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Reviews Section */}
+      <ReviewsSection />
 
       {/* About Section */}
       <section className="py-20 bg-luxury-dark" id="about">

@@ -18,7 +18,19 @@ app.set('trust proxy', 1);
 
 // Middleware
 // Security headers
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: false,
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'upgrade-insecure-requests': null,
+      'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+      'connect-src': ["'self'", 'https:'],
+      'font-src': ["'self'", 'https:', 'data:']
+    }
+  }
+}));
 
 // Compression for responses
 app.use(compression());
@@ -41,8 +53,8 @@ app.use(hpp());
 const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.length === 0) return cb(null, true);
-    return allowedOrigins.includes(origin) ? cb(null, true) : cb(new Error('Not allowed by CORS'));
+    if (!origin || origin === 'null' || allowedOrigins.length === 0) return cb(null, true);
+    return allowedOrigins.includes(origin) ? cb(null, true) : cb(null, false);
   },
   credentials: true
 }));
@@ -64,12 +76,59 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/aviatury', require('./routes/aviatury'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist'), { maxAge: '7d', etag: true }));
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '../client/dist');
+  const indexHtml = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+
+  // Serve static assets
+  app.use(express.static(distPath, { index: false, maxAge: '7d', etag: true }));
+
+  // Handle SEO routes
+  app.get(['/tours/:id', '/destinations/:slug'], async (req, res) => {
+    try {
+      let title = 'Trips for Ukraine';
+      let description = 'Авторські тури по всьому світу для українців';
+      let image = '';
+
+      if (req.params.id) {
+        const Tour = require('./models/Tour');
+        const tour = await Tour.findById(req.params.id);
+        if (tour) {
+          title = `${tour.title} | Trips for Ukraine`;
+          description = tour.description?.slice(0, 160);
+          image = tour.images?.[0] || '';
+        }
+      } else if (req.params.slug) {
+        const Destination = require('./models/Destination');
+        const dest = await Destination.findOne({ slug: req.params.slug });
+        if (dest) {
+          title = `${dest.nameUk} | Trips for Ukraine`;
+          description = `Відкрийте для себе ${dest.nameUk} з Trips for Ukraine. ${dest.description?.slice(0, 100)}`;
+        }
+      }
+
+      // Inject meta tags into HTML with robust regex
+      let modifiedHtml = indexHtml
+        .replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`)
+        .replace(/<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/, `<meta name="description" content="${description}" />`)
+        // Open Graph
+        .replace(/<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>/, `<meta property="og:title" content="${title}" />`)
+        .replace(/<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>/, `<meta property="og:description" content="${description}" />`)
+        .replace(/<meta\s+property="og:image"\s+content="[\s\S]*?"\s*\/?>/, `<meta property="og:image" content="${image}" />`);
+
+      res.send(modifiedHtml);
+    } catch (error) {
+      res.send(indexHtml);
+    }
+  });
+
+  // Fallback for other routes
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    res.send(indexHtml);
   });
 }
 

@@ -63,6 +63,9 @@ export default function Navbar() {
             <a href="/#about" className="text-gray-300 hover:text-luxury-gold transition font-medium">
               Про нас
             </a>
+            <a href="/#reviews" className="text-gray-300 hover:text-luxury-gold transition font-medium">
+              Відгуки
+            </a>
             <a
               href="#contact"
               className="bg-luxury-gold text-luxury-dark px-6 py-2 rounded-full hover:bg-luxury-gold-light transition shadow-lg font-semibold"
@@ -138,6 +141,13 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Про нас
+            </a>
+            <a
+              href="/#reviews"
+              className="block px-3 py-2 text-gray-300 hover:bg-luxury-gold/10 hover:text-luxury-gold rounded"
+              onClick={() => setIsOpen(false)}
+            >
+              Відгуки
             </a>
             <a
               href="#contact"

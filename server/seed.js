@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const User = require('./models/User');
 const Destination = require('./models/Destination');
 const Tour = require('./models/Tour');
+const Review = require('./models/Review');
 
 dotenv.config();
 
@@ -171,6 +172,7 @@ const seedDatabase = async () => {
     await User.deleteMany();
     await Destination.deleteMany();
     await Tour.deleteMany();
+    await Review.deleteMany();
 
     console.log('🗑️  Старі дані видалено');
 
@@ -383,6 +385,42 @@ const seedDatabase = async () => {
 
     const createdTours = await Tour.insertMany(tours);
     console.log('✅ Тури створено:', createdTours.length);
+
+    const reviews = [
+      {
+        tourTitle: 'Мадейра: Острів вічної весни',
+        travelDate: 'Вересень 2024',
+        authorName: 'Анастасія Коваленко',
+        authorCity: 'Київ',
+        rating: 5,
+        text: 'Неймовірна подорож! Організація на найвищому рівні: від зустрічі в аеропорту до кожного трекінгу вздовж левад. Краєвиди з піків просто захоплюють дух, а компанія зібралася дуже душевна. Обов\'язково поїду з вами ще!',
+        isPublished: true,
+        order: 0
+      },
+      {
+        tourTitle: 'Ісландія: Країна вогню та льоду',
+        travelDate: 'Липень 2024',
+        authorName: 'Дмитро та Олена',
+        authorCity: 'Львів',
+        rating: 5,
+        text: 'Це була мрія усього життя, і вона здійснилася на всі 100%. Водоспади, гейзери, чорні пляжі Віка та купання в термальних джерелах — вражень на роки вперед. Гід знав усі секретні локації без натовпів туристів!',
+        isPublished: true,
+        order: 1
+      },
+      {
+        tourTitle: 'Норвегія: Долина Фіордів та Тролтунга',
+        travelDate: 'Серпень 2024',
+        authorName: 'Михайло Сидоренко',
+        authorCity: 'Дніпро',
+        rating: 5,
+        text: 'Тур перевершив усі сподівання! Чіткий таймінг, комфортне житло та шалена краса норвезьких фіордів. Підйом на Язик Троля був викликом, але підтримка команди допомогла подолати весь маршрут на одному диханні.',
+        isPublished: true,
+        order: 2
+      }
+    ];
+
+    const createdReviews = await Review.insertMany(reviews);
+    console.log('✅ Відгуки створено:', createdReviews.length);
 
     console.log('\n🎉 База даних успішно заповнена!');
     console.log(`\n👤 Дані для входу в адмін-панель:`);

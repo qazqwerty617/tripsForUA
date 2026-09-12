@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { tours as MOCK_TOURS, destinations as MOCK_DESTINATIONS } from './mockData'
+import { tours as MOCK_TOURS, destinations as MOCK_DESTINATIONS, reviews as MOCK_REVIEWS } from './mockData'
 
 // Use Vite env var if provided (e.g., on Vercel), otherwise fallback to local proxy '/api'
 const BASE_URL = import.meta.env.VITE_API_BASE || '/api'
@@ -55,6 +55,11 @@ api.interceptors.response.use(
       if (url === '/destinations' || url.startsWith('/destinations?')) {
         console.warn('[API Fallback] Using mock destinations list')
         return Promise.resolve({ data: MOCK_DESTINATIONS, status: 200, statusText: 'OK', headers: {}, config: cfg })
+      }
+      // /reviews
+      if (url === '/reviews' || url.startsWith('/reviews?')) {
+        console.warn('[API Fallback] Using mock reviews list')
+        return Promise.resolve({ data: MOCK_REVIEWS, status: 200, statusText: 'OK', headers: {}, config: cfg })
       }
     }
 

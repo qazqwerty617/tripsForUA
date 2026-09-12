@@ -10,7 +10,8 @@ import toast from 'react-hot-toast'
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     tours: 0,
-    aviatury: 0
+    aviatury: 0,
+    reviews: 0
   })
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -46,14 +47,16 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const [toursRes, aviaturyRes] = await Promise.all([
+      const [toursRes, aviaturyRes, reviewsRes] = await Promise.all([
         api.get('/tours'),
-        api.get('/aviatury')
+        api.get('/aviatury'),
+        api.get('/reviews?all=true').catch(() => ({ data: [] }))
       ])
 
       setStats({
         tours: toursRes.data.length,
-        aviatury: aviaturyRes.data.length
+        aviatury: aviaturyRes.data.length,
+        reviews: reviewsRes.data?.length || 0
       })
 
       const today = new Date()
@@ -259,7 +262,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             to="/mng-x7k9p2-secure/tours"
             className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 p-8 hover:border-luxury-gold hover:shadow-luxury-gold/20 transition group"
@@ -268,7 +271,7 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold mb-2 text-gray-100 group-hover:text-luxury-gold transition">
               Авторські подорожі
             </h3>
-            <p className="text-gray-300">
+            <p className="text-gray-300 text-sm">
               Додавайте, редагуйте та видаляйте тури
             </p>
           </Link>
@@ -281,8 +284,26 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold mb-2 text-gray-100 group-hover:text-luxury-gold transition">
               Індивідуальні тури
             </h3>
-            <p className="text-gray-300">
+            <p className="text-gray-300 text-sm">
               Керуйте пропозиціями індивідуальних турів
+            </p>
+          </Link>
+
+          <Link
+            to="/mng-x7k9p2-secure/reviews"
+            className="bg-luxury-dark-card rounded-xl shadow-xl border border-luxury-gold/20 p-8 hover:border-luxury-gold hover:shadow-luxury-gold/20 transition group relative overflow-hidden"
+          >
+            <div className="flex justify-between items-start">
+              <MessageCircle className="h-12 w-12 text-luxury-gold mb-4" />
+              <span className="text-xs font-semibold bg-luxury-gold/20 text-luxury-gold px-2.5 py-1 rounded-full border border-luxury-gold/30">
+                {stats.reviews} відгуків
+              </span>
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-gray-100 group-hover:text-luxury-gold transition">
+              Відгуки мандрівників
+            </h3>
+            <p className="text-gray-300 text-sm">
+              Додавайте та редагуйте відгуки туристів на сайті
             </p>
           </Link>
         </div>

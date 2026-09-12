@@ -2,11 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  build: {
+    modulePreload: false
+  },
   plugins: [react()],
   server: {
     host: '127.0.0.1',
     port: 3001,
-    // 👇 ВАЖНО: сюда добавляем домен, который дал ngrok
     allowedHosts: [
       'https://unlaudatory-corbin-noninfluentially.ngrok-free.dev'
     ],
@@ -22,4 +24,3 @@ export default defineConfig({
     }
   }
 })
-
