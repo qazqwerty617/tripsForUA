@@ -31,11 +31,6 @@ export default function Footer() {
                   Про нас
                 </a>
               </li>
-              <li>
-                <a href="/#reviews" className="text-gray-400 hover:text-primary-400 transition">
-                  Відгуки
-                </a>
-              </li>
             </ul>
           </div>
 

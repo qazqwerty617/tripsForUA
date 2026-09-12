@@ -4,7 +4,6 @@ import { Calendar, MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'luci
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import ReviewsSection from '../components/ReviewsSection'
 
 
 export default function Home() {
@@ -557,9 +556,6 @@ export default function Home() {
           )}
         </div>
       </section>
-
-      {/* Reviews Section */}
-      <ReviewsSection />
 
       {/* About Section */}
       <section className="py-20 bg-luxury-dark" id="about">
