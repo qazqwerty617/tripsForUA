@@ -161,14 +161,14 @@ export default function FloatingContactWidget() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Звʼязатися з нами"
-        className="relative group w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-[#1c1c1f]/95 backdrop-blur-md flex items-center justify-center border border-luxury-gold/40 hover:border-luxury-gold shadow-[0_8px_30px_rgba(0,0,0,0.7)] hover:shadow-[0_8px_25px_rgba(212,175,55,0.2)] transition-all duration-300 transform hover:scale-105 active:scale-95"
+        className="relative group w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#1c1c1f]/95 backdrop-blur-md flex items-center justify-center border border-luxury-gold/45 hover:border-luxury-gold shadow-[0_8px_30px_rgba(0,0,0,0.7)] hover:shadow-[0_8px_25px_rgba(212,175,55,0.25)] transition-all duration-300 transform hover:scale-105 active:scale-95"
       >
         {/* Icon toggle */}
         {isOpen ? (
-          <X className="w-5 h-5 text-luxury-gold transition-transform duration-200 rotate-90" />
+          <X className="w-6 h-6 sm:w-7 sm:h-7 text-luxury-gold transition-transform duration-200 rotate-90" />
         ) : (
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#229ED9] flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105">
-            <TelegramIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#229ED9] flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105">
+            <TelegramIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
         )}
       </button>
