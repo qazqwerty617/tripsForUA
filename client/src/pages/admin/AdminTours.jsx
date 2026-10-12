@@ -72,7 +72,22 @@ function SortableTourRow({ tour, handleEdit, handleDelete, countriesData }) {
       </td>
       <td className="px-4 py-4 text-luxury-gold font-semibold">€{tour.price}</td>
       <td className="px-4 py-4 text-sm text-gray-300">
-        {format(new Date(tour.startDate), 'dd.MM.yyyy')}
+        {tour.hasFixedDates && tour.availableDates?.length
+          ? (
+            <div>
+              <div>{format(new Date(tour.availableDates[0]), 'dd.MM.yyyy')}</div>
+              {tour.availableDates.length > 1 && (
+                <div className="text-xs text-luxury-gold">+{tour.availableDates.length - 1} дат</div>
+              )}
+            </div>
+          )
+          : tour.hasFixedDates && tour.startDate && new Date(tour.startDate).getFullYear() > 2000
+            ? format(new Date(tour.startDate), 'dd.MM.yyyy')
+            : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-luxury-gold/10 text-luxury-gold border border-luxury-gold/30">
+                Будь-які дати
+              </span>
+            )}
       </td>
       <td className="px-4 py-4 text-gray-300">
         {tour.availableSpots}/{tour.maxParticipants}
@@ -121,6 +136,7 @@ export default function AdminTours() {
     price: '',
     originalPrice: '',
     duration: '',
+    hasFixedDates: false,
     startDate: '',
     endDate: '',
     availableDates: [''],
@@ -152,6 +168,13 @@ export default function AdminTours() {
 
   // Auto-calculate startDate and endDate from availableDates and duration
   useEffect(() => {
+    if (!formData.hasFixedDates) {
+      if (formData.startDate || formData.endDate) {
+        setFormData(prev => ({ ...prev, startDate: '', endDate: '' }))
+      }
+      return
+    }
+
     const validDates = formData.availableDates
       .filter(d => d && d.trim())
       .map(d => new Date(d))
@@ -174,8 +197,12 @@ export default function AdminTours() {
       if (startDateStr !== formData.startDate || endDateStr !== formData.endDate) {
         setFormData(prev => ({ ...prev, startDate: startDateStr, endDate: endDateStr }))
       }
+    } else {
+      if (formData.startDate || formData.endDate) {
+        setFormData(prev => ({ ...prev, startDate: '', endDate: '' }))
+      }
     }
-  }, [formData.availableDates, formData.duration])
+  }, [formData.hasFixedDates, formData.availableDates, formData.duration])
 
   const fetchData = async () => {
     try {
@@ -238,8 +265,13 @@ export default function AdminTours() {
     }
 
     try {
+      const validDates = formData.hasFixedDates
+        ? formData.availableDates.filter(d => d && d.trim()).map(d => new Date(d))
+        : []
+
       const cleanedData = {
         ...formData,
+        hasFixedDates: !!formData.hasFixedDates,
         title: formData.title && formData.title.trim()
           ? formData.title
           : formData.city || '',
@@ -254,7 +286,9 @@ export default function AdminTours() {
         highlights: formData.highlights.filter(h => h && h.trim()),
         included: formData.included.filter(i => i && i.trim()),
         notIncluded: formData.notIncluded.filter(i => i && i.trim()),
-        availableDates: formData.availableDates.filter(d => d && d.trim()).map(d => new Date(d))
+        availableDates: validDates,
+        startDate: validDates.length > 0 ? validDates[0] : null,
+        endDate: validDates.length > 0 && formData.endDate ? new Date(formData.endDate) : null
       }
 
       // Remove empty fields that might cause validation issues
@@ -293,6 +327,7 @@ export default function AdminTours() {
 
   const handleEdit = (tour) => {
     setEditingTour(tour)
+    const isFixed = tour.hasFixedDates === true || (tour.hasFixedDates !== false && Array.isArray(tour.availableDates) && tour.availableDates.length > 0)
     setFormData({
       destination: tour.destination?._id || '',
       country: tour.country || '',
@@ -303,11 +338,12 @@ export default function AdminTours() {
       price: tour.price,
       originalPrice: tour.originalPrice || '',
       duration: tour.duration,
-      startDate: format(new Date(tour.startDate), 'yyyy-MM-dd'),
-      endDate: format(new Date(tour.endDate), 'yyyy-MM-dd'),
-      availableDates: tour.availableDates?.length
-        ? tour.availableDates.map(d => format(new Date(d), 'yyyy-MM-dd'))
-        : [format(new Date(tour.startDate), 'yyyy-MM-dd')],
+      hasFixedDates: isFixed,
+      startDate: isFixed && tour.startDate && new Date(tour.startDate).getFullYear() > 2000 ? format(new Date(tour.startDate), 'yyyy-MM-dd') : '',
+      endDate: isFixed && tour.endDate && new Date(tour.endDate).getFullYear() > 2000 ? format(new Date(tour.endDate), 'yyyy-MM-dd') : '',
+      availableDates: isFixed && tour.availableDates?.length
+        ? tour.availableDates.filter(d => d && new Date(d).getFullYear() > 2000).map(d => format(new Date(d), 'yyyy-MM-dd'))
+        : [''],
       maxParticipants: tour.maxParticipants,
       availableSpots: tour.availableSpots,
       images: tour.images.length ? tour.images : [''],
@@ -335,6 +371,7 @@ export default function AdminTours() {
       price: '',
       originalPrice: '',
       duration: '',
+      hasFixedDates: false,
       startDate: '',
       endDate: '',
       availableDates: [''],
@@ -527,42 +564,87 @@ export default function AdminTours() {
                   />
                 </div>
 
-                {/* Available Dates (Primary Input) */}
+                {/* Available Dates Selection */}
                 <div className="md:col-span-2 p-4 bg-luxury-dark-lighter rounded-lg border border-luxury-gold/20">
                   <label className="block text-sm font-medium mb-3 text-gray-300">
-                    📅 Дати виїзду
+                    📅 Формат дат туру
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Додайте всі дати виїзду. Система автоматично встановить першу дату як "Початок туру" та розрахує дату закінчення на основі тривалості.
-                  </p>
-                  <div className="space-y-2">
-                    {formData.availableDates.map((date, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="date"
-                          value={date}
-                          onChange={(e) => updateArrayField('availableDates', index, e.target.value)}
-                          className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
-                        />
-                        {formData.availableDates.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeArrayField('availableDates', index)}
-                            className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, hasFixedDates: false }))}
+                      className={`p-3 rounded-lg border text-left transition ${!formData.hasFixedDates
+                        ? 'bg-luxury-gold/20 border-luxury-gold text-luxury-gold'
+                        : 'bg-luxury-dark border-luxury-gold/20 text-gray-400 hover:border-luxury-gold/40'
+                        }`}
+                    >
+                      <div className="font-semibold flex items-center gap-2">
+                        <span>✨ Будь-які дати (під запит)</span>
                       </div>
-                    ))}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Індивідуальний тур, дати можуть бути будь-які. Завжди показується при фільтрації за датами.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, hasFixedDates: true, availableDates: prev.availableDates.length && prev.availableDates[0] ? prev.availableDates : [''] }))}
+                      className={`p-3 rounded-lg border text-left transition ${formData.hasFixedDates
+                        ? 'bg-luxury-gold/20 border-luxury-gold text-luxury-gold'
+                        : 'bg-luxury-dark border-luxury-gold/20 text-gray-400 hover:border-luxury-gold/40'
+                        }`}
+                    >
+                      <div className="font-semibold flex items-center gap-2">
+                        <span>👥 Фіксовані дати (груповий тур)</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Груповий тур з конкретними датами виїзду. Показується при пошуку тільки якщо обрані дати збігаються.
+                      </p>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => addArrayField('availableDates')}
-                    className="mt-3 text-sm text-luxury-gold hover:text-luxury-gold-light"
-                  >
-                    + Додати дату
-                  </button>
+
+                  {formData.hasFixedDates ? (
+                    <div className="pt-4 border-t border-luxury-gold/20">
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Конкретні дати виїзду
+                      </label>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Додайте всі дати виїзду для цього групового туру.
+                      </p>
+                      <div className="space-y-2">
+                        {formData.availableDates.map((date, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              type="date"
+                              value={date}
+                              onChange={(e) => updateArrayField('availableDates', index, e.target.value)}
+                              className="flex-1 px-4 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold"
+                            />
+                            {formData.availableDates.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayField('availableDates', index)}
+                                className="px-3 py-2 bg-red-900/50 text-red-300 rounded-lg hover:bg-red-900 border border-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addArrayField('availableDates')}
+                        className="mt-3 text-sm text-luxury-gold hover:text-luxury-gold-light"
+                      >
+                        + Додати дату
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-luxury-dark rounded-lg border border-luxury-gold/10 text-xs text-gray-400">
+                      ℹ️ Для цього туру дати не фіксовані. На сайті відображатиметься "Дати під запит", а в пошуку за датами тур буде доступний для будь-якого періоду.
+                    </div>
+                  )}
                 </div>
 
                 {/* Hidden Auto-Calculated Fields */}

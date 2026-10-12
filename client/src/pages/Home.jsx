@@ -4,6 +4,8 @@ import { Calendar, MapPin, Users, Star, ArrowRight, Check, X, Globe } from 'luci
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import ReviewsSection from '../components/ReviewsSection'
+import { trackPixelEvent } from '../utils/metaPixel'
 
 
 export default function Home() {
@@ -38,41 +40,18 @@ export default function Home() {
     return now.toISOString().split('T')[0]
   }, [])
 
-  // useMemo щоб перераховувати тільки коли allTours змінюється
-  const { minTourDate, maxTourDate } = useMemo(() => {
-    if (allTours.length === 0) return { minTourDate: '', maxTourDate: '' }
-    const allDates = []
-    allTours.forEach(t => {
-      if (t.availableDates && t.availableDates.length > 0) {
-        t.availableDates.forEach(d => {
-          const date = new Date(d)
-          if (!isNaN(date.getTime())) {
-            date.setHours(0, 0, 0, 0)
-            allDates.push(date)
-          }
-        })
-      } else if (t.startDate) {
-        const date = new Date(t.startDate)
-        if (!isNaN(date.getTime())) {
-          date.setHours(0, 0, 0, 0)
-          allDates.push(date)
-        }
-      }
-    })
 
-    if (allDates.length === 0) return { minTourDate: '', maxTourDate: '' }
-
-    const minDate = new Date(Math.min(...allDates)).toISOString().split('T')[0]
-    const maxDate = new Date(Math.max(...allDates)).toISOString().split('T')[0]
-
-    return { minTourDate: minDate, maxTourDate: maxDate }
-  }, [allTours, today])
 
 
   // Helper for safe date checking - OPTIMIZED
   const checkDates = (item, dateFrom, dateTo, isTour = false) => {
     try {
       if (!isTour) return true;
+      if (!dateFrom && !dateTo) return true;
+
+      // Якщо у туру немає фіксованих дат (під запит / будь-які дати) — показуємо його завжди
+      const hasFixedDates = item.hasFixedDates === true || (item.hasFixedDates !== false && Array.isArray(item.availableDates) && item.availableDates.length > 0);
+      if (!hasFixedDates) return true;
 
       // Collect all dates from the tour
       let itemDates = [];
@@ -81,25 +60,22 @@ export default function Home() {
       if (Array.isArray(item.availableDates) && item.availableDates.length > 0) {
         itemDates = item.availableDates
           .map(d => new Date(d))
-          .filter(d => !isNaN(d.getTime()));
+          .filter(d => !isNaN(d.getTime()) && d.getFullYear() > 2000);
       }
 
-      // Fall back to startDate if no availableDates
-      if (itemDates.length === 0 && item.startDate) {
+      // Fall back to startDate only if tour explicitly has fixed dates and no availableDates
+      if (itemDates.length === 0 && item.startDate && item.hasFixedDates) {
         const startDate = new Date(item.startDate);
-        if (!isNaN(startDate.getTime())) {
+        if (!isNaN(startDate.getTime()) && startDate.getFullYear() > 2000) {
           itemDates = [startDate];
         }
       }
 
-      // No dates at all = tour not available
-      if (itemDates.length === 0) return false;
+      // Якщо у туру немає фіксованих дат — показуємо його завжди
+      if (itemDates.length === 0) return true;
 
       // Ensure all dates are at 00:00:00 for comparison
       itemDates.forEach(d => d.setHours(0, 0, 0, 0));
-
-      // If no filter applied, show all tours
-      if (!dateFrom && !dateTo) return true;
 
       // Parse filter dates
       const fromDate = dateFrom ? new Date(dateFrom) : null;
@@ -120,7 +96,7 @@ export default function Home() {
       });
     } catch (e) {
       console.error('Error filtering dates:', e);
-      return false;
+      return true;
     }
   };
 
@@ -259,6 +235,7 @@ export default function Home() {
               <a
                 href="#contact"
                 className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 backdrop-blur-sm transition inline-flex items-center justify-center animate-scale-in"
+                onClick={() => trackPixelEvent('Contact', { method: 'HeroContactButton', source: 'Home' })}
               >
                 Зв'язок з нами
               </a>
@@ -299,9 +276,9 @@ export default function Home() {
       {/* Авторські подорожі */}
       <section className="py-20 bg-luxury-dark-lighter" id="tours">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Авторські подорожі</h2>
-            <p className="text-xl text-gray-300">Обирай подорож мрії вже сьогодні</p>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-luxury-gold">Авторські подорожі</h2>
+            <p className="text-sm sm:text-lg md:text-xl text-gray-300">Обирай подорож мрії вже сьогодні</p>
           </div>
 
           {/* Фільтр за датами вильоту */}
@@ -331,8 +308,8 @@ export default function Home() {
                       }
                     }}
                     onClick={(e) => e.target.showPicker?.()}
-                    min={minTourDate || today}
-                    max={toursDateTo || maxTourDate}
+                    min={today}
+                    max={toursDateTo || undefined}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
                   />
@@ -362,8 +339,7 @@ export default function Home() {
                       }
                     }}
                     onClick={(e) => !e.target.disabled && e.target.showPicker?.()}
-                    min={toursDateFrom || minTourDate || today}
-                    max={maxTourDate}
+                    min={toursDateFrom || today}
                     lang="uk"
                     className="w-full px-3 py-2 bg-luxury-dark border border-luxury-gold/30 text-gray-100 rounded-lg focus:ring-2 focus:ring-luxury-gold pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
                     disabled={!toursDateFrom}
@@ -379,7 +355,20 @@ export default function Home() {
                 </div>
               </div>
               <div className="md:col-span-2 flex gap-3">
-                <button onClick={() => setShowAllTours(true)} className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition">Знайти</button>
+                <button
+                  onClick={() => {
+                    setShowAllTours(true)
+                    if (toursDateFrom || toursDateTo) {
+                      trackPixelEvent('Search', {
+                        search_string: `${toursDateFrom || ''} - ${toursDateTo || ''}`,
+                        content_category: 'Tours Date Filter'
+                      })
+                    }
+                  }}
+                  className="flex-1 bg-luxury-gold text-luxury-dark px-4 py-3 rounded-lg font-semibold hover:bg-luxury-gold-light transition"
+                >
+                  Знайти
+                </button>
                 <button onClick={() => { setToursDateFrom(''); setToursDateTo(''); setShowAllTours(false); }} className="px-4 py-3 rounded-lg border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition">Скинути</button>
               </div>
             </div>
@@ -441,12 +430,15 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Reviews Section */}
+      <ReviewsSection />
+
       {/* Авіатури */}
       <section className="py-20 bg-luxury-dark" id="aviatury">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Індивідуальні тури</h2>
-            <p className="text-xl text-gray-300">Подорожуй комфортно, вигідно та без зайвих витрат</p>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-luxury-gold">Індивідуальні тури</h2>
+            <p className="text-sm sm:text-lg md:text-xl text-gray-300">Подорожуй комфортно, вигідно та без зайвих витрат</p>
           </div>
 
           {/* Фільтр за типом */}
@@ -494,6 +486,13 @@ export default function Home() {
                 onClick={() => {
                   setSelectedAviatur(aviatur)
                   setShowAviaturModal(true)
+                  trackPixelEvent('ViewContent', {
+                    content_name: aviatur.title,
+                    content_type: 'product',
+                    content_ids: [aviatur._id],
+                    value: aviatur.price,
+                    currency: 'EUR'
+                  })
                   // Track view for analytics
                   api.post('/analytics/view', { itemId: aviatur._id, itemType: 'Aviatur' })
                     .catch(() => { }) // Silent fail
@@ -625,8 +624,8 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-luxury-dark-lighter via-luxury-dark to-black border-t border-luxury-gold/20 text-white" id="contact">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-luxury-gold">Готові до пригод?</h2>
-          <p className="text-xl mb-8 text-gray-300">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-luxury-gold">Готові до пригод?</h2>
+          <p className="text-sm sm:text-lg md:text-xl mb-6 sm:mb-8 text-gray-300">
             Звʼяжіться з нами у зручному месенджері та отримайте ідеальну пропозицію
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -635,6 +634,10 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
               className="bg-luxury-gold text-luxury-dark px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold-light transition shadow-xl"
+              onClick={() => {
+                trackPixelEvent('Contact', { method: 'Telegram', source: 'HomeContactSection' })
+                api.trackSocialClick('telegram', { type: 'General', name: 'HomeContact' }).catch(() => { })
+              }}
             >
               Telegram: @trips_for_ukr
             </a>
@@ -643,6 +646,10 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
               className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-full font-semibold text-lg hover:bg-luxury-gold/10 backdrop-blur-sm transition"
+              onClick={() => {
+                trackPixelEvent('Contact', { method: 'Instagram', source: 'HomeContactSection' })
+                api.trackSocialClick('instagram', { type: 'General', name: 'HomeContact' }).catch(() => { })
+              }}
             >
               Instagram
             </a>
@@ -741,6 +748,15 @@ export default function Home() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 bg-luxury-gold text-luxury-dark py-4 rounded-xl font-bold text-lg hover:bg-luxury-gold-light transition flex items-center justify-center shadow-lg hover:shadow-luxury-gold/20"
+                        onClick={() => {
+                          trackPixelEvent('Lead', {
+                            content_name: selectedAviatur?.title,
+                            content_category: 'Aviatur Booking',
+                            currency: 'EUR',
+                            value: selectedAviatur?.price || 0
+                          })
+                          api.trackSocialClick('telegram', { type: 'Aviatur', id: selectedAviatur?._id, name: selectedAviatur?.title }).catch(() => { })
+                        }}
                       >
                         Забронювати в Telegram
                         <ArrowRight className="ml-2 h-5 w-5" />
@@ -750,6 +766,10 @@ export default function Home() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 border-2 border-luxury-gold text-luxury-gold py-4 rounded-xl font-bold text-lg hover:bg-luxury-gold/10 transition flex items-center justify-center"
+                        onClick={() => {
+                          trackPixelEvent('Contact', { method: 'Instagram', type: 'Aviatur', tour: selectedAviatur?.title })
+                          api.trackSocialClick('instagram', { type: 'Aviatur', id: selectedAviatur?._id, name: selectedAviatur?.title }).catch(() => { })
+                        }}
                       >
                         Instagram
                       </a>

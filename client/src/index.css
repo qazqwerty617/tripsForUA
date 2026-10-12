@@ -17,9 +17,11 @@
   }
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling and prevent mobile font auto-scaling */
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Custom scrollbar with luxury theme */

@@ -30,10 +30,17 @@ router.get('/', async (req, res) => {
       if (toDate) toDate.setHours(23, 59, 59, 999);
 
       tours = tours.filter(tour => {
-        // Get all dates to check (availableDates if present, else just startDate)
+        // Якщо у туру немає фіксованих дат (під запит / будь-які дати) — він доступний на будь-які дати
+        const hasFixedDates = tour.hasFixedDates === true || (tour.hasFixedDates !== false && Array.isArray(tour.availableDates) && tour.availableDates.length > 0);
+        if (!hasFixedDates) return true;
+
+        // Get all dates to check (availableDates if present, else startDate)
         const datesToCheck = tour.availableDates && tour.availableDates.length > 0
-          ? tour.availableDates
-          : [tour.startDate];
+          ? tour.availableDates.filter(d => d && !isNaN(new Date(d).getTime()) && new Date(d).getFullYear() > 2000)
+          : (tour.startDate && !isNaN(new Date(tour.startDate).getTime()) && new Date(tour.startDate).getFullYear() > 2000 ? [tour.startDate] : []);
+
+        // Якщо фіксованих дат немає — доступний завжди
+        if (datesToCheck.length === 0) return true;
 
         // Check if any date falls within the range
         return datesToCheck.some(date => {

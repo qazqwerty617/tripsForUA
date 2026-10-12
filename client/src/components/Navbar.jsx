@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom'
 import { Plane, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import api from '../utils/api'
+import { trackPixelEvent } from '../utils/metaPixel'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleSocialClick = (platform) => {
+    trackPixelEvent('Contact', { method: platform, source: 'Navbar' })
     api.trackSocialClick(platform, { type: 'General', name: 'Navbar' }).catch(err => console.error('Social tracking error:', err));
   }
 
@@ -63,9 +65,13 @@ export default function Navbar() {
             <a href="/#about" className="text-gray-300 hover:text-luxury-gold transition font-medium">
               Про нас
             </a>
+            <a href="/#reviews" className="text-gray-300 hover:text-luxury-gold transition font-medium">
+              Відгуки
+            </a>
             <a
               href="#contact"
               className="bg-luxury-gold text-luxury-dark px-6 py-2 rounded-full hover:bg-luxury-gold-light transition shadow-lg font-semibold"
+              onClick={() => trackPixelEvent('Contact', { method: 'HeaderContactButton', source: 'Navbar' })}
             >
               Зв'язатися
             </a>
@@ -140,11 +146,18 @@ export default function Navbar() {
               Про нас
             </a>
             <a
+              href="/#reviews"
+              className="block px-3 py-2 text-gray-300 hover:bg-luxury-gold/10 hover:text-luxury-gold rounded"
+              onClick={() => setIsOpen(false)}
+            >
+              Відгуки
+            </a>
+            <a
               href="#contact"
               className="block px-3 py-2 text-luxury-dark bg-luxury-gold rounded text-center shadow-lg font-semibold"
               onClick={() => {
                 setIsOpen(false);
-                // No tracking for contact form scroll yet
+                trackPixelEvent('Contact', { method: 'MobileHeaderContactButton', source: 'Navbar' });
               }}
             >
               Зв'язатися

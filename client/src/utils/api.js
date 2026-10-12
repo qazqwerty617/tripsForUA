@@ -63,6 +63,14 @@ api.interceptors.response.use(
       }
     }
 
+    if (error.response?.status === 401) {
+      const pathname = window.location.pathname
+      if (pathname.startsWith('/mng-x7k9p2-secure') && pathname !== '/mng-x7k9p2-secure/login') {
+        localStorage.removeItem('auth-storage')
+        window.location.href = '/mng-x7k9p2-secure/login'
+      }
+    }
+
     return Promise.reject(error)
   }
 )

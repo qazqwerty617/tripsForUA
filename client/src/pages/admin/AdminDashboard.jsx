@@ -303,7 +303,7 @@ export default function AdminDashboard() {
               Відгуки мандрівників
             </h3>
             <p className="text-gray-300 text-sm">
-              Додавайте та редагуйте відгуки туристів на сайті
+              Додавайте відгуки, фото поїздок та налаштовуйте показ
             </p>
           </Link>
         </div>

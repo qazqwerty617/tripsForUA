@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../utils/api'
 import DestinationModal from '../components/DestinationModal'
+import { trackPixelEvent } from '../utils/metaPixel'
 
 export default function Destinations() {
   const [destinations, setDestinations] = useState([])
@@ -12,6 +13,12 @@ export default function Destinations() {
   const openModal = (destination) => {
     setSelectedDestination(destination)
     setIsModalOpen(true)
+    trackPixelEvent('ViewContent', {
+      content_name: destination.nameUk,
+      content_category: 'Destination',
+      content_ids: [destination._id || destination.slug || destination.nameUk],
+      content_type: 'destination'
+    })
   }
 
   const closeModal = () => {

@@ -72,7 +72,9 @@ export const tours = [
     included: ['Проживання', 'Транспорт', 'Гід'],
     notIncluded: ['Авіаквитки', 'Харчування'],
     featured: true,
-    status: 'active'
+    status: 'active',
+    hasFixedDates: true,
+    availableDates: ['2025-12-15T00:00:00.000Z', '2026-01-14T00:00:00.000Z']
   },
   {
     _id: 'tour_madeira',
@@ -87,8 +89,10 @@ export const tours = [
     description: 'Відкрийте для себе красу Мадейри.',
     price: 1290,
     duration: '7 днів / 6 ночей',
-    startDate: '2025-03-10T00:00:00.000Z',
-    endDate: '2025-03-17T00:00:00.000Z',
+    startDate: '',
+    endDate: '',
+    hasFixedDates: false,
+    availableDates: [],
     maxParticipants: 15,
     availableSpots: 12,
     images: ['https://images.unsplash.com/photo-1603623660476-ae82cd1c5293?w=800'],
@@ -111,8 +115,10 @@ export const tours = [
     description: 'Найкрасивіші місця Швейцарських Альп.',
     price: 2150,
     duration: '8 днів / 7 ночей',
-    startDate: '2025-06-20T00:00:00.000Z',
-    endDate: '2025-06-28T00:00:00.000Z',
+    startDate: '',
+    endDate: '',
+    hasFixedDates: false,
+    availableDates: [],
     maxParticipants: 12,
     availableSpots: 9,
     images: ['https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=800'],
@@ -131,8 +137,13 @@ export const reviews = [
     travelDate: 'Вересень 2024',
     authorName: 'Анастасія Коваленко',
     authorCity: 'Київ',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
     rating: 5,
     text: 'Неймовірна подорож! Організація на найвищому рівні: від зустрічі в аеропорту до кожного трекінгу вздовж левад. Краєвиди з піків просто захоплюють дух, а компанія зібралася дуже душевна. Обов\'язково поїду з вами ще!',
+    photos: [
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600'
+    ],
     isPublished: true,
     order: 0,
     createdAt: '2024-09-25T12:00:00.000Z'
@@ -143,8 +154,12 @@ export const reviews = [
     travelDate: 'Липень 2024',
     authorName: 'Дмитро та Олена',
     authorCity: 'Львів',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
     rating: 5,
     text: 'Це була мрія усього життя, і вона здійснилася на всі 100%. Водоспади, гейзери, чорні пляжі Віка та купання в термальних джерелах — вражень на роки вперед. Гід знав усі секретні локації без натовпів туристів!',
+    photos: [
+      'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=600'
+    ],
     isPublished: true,
     order: 1,
     createdAt: '2024-08-01T10:00:00.000Z'
@@ -155,8 +170,12 @@ export const reviews = [
     travelDate: 'Серпень 2024',
     authorName: 'Михайло Сидоренко',
     authorCity: 'Дніпро',
+    authorAvatar: '',
     rating: 5,
     text: 'Тур перевершив усі сподівання! Чіткий таймінг, комфортне житло та шалена краса норвезьких фіордів. Підйом на Язик Троля був викликом, але підтримка команди допомогла подолати весь маршрут на одному диханні.',
+    photos: [
+      'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600'
+    ],
     isPublished: true,
     order: 2,
     createdAt: '2024-08-20T14:30:00.000Z'

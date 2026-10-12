@@ -1,9 +1,11 @@
 import { Plane, Instagram, MessageCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import api from '../utils/api'
+import { trackPixelEvent } from '../utils/metaPixel'
 
 export default function Footer() {
   const handleSocialClick = (platform) => {
+    trackPixelEvent('Contact', { method: platform, source: 'Footer' })
     api.trackSocialClick(platform, { type: 'General', name: 'Footer' }).catch(err => console.error('Social tracking error:', err));
   }
 

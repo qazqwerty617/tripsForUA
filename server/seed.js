@@ -392,8 +392,13 @@ const seedDatabase = async () => {
         travelDate: 'Вересень 2024',
         authorName: 'Анастасія Коваленко',
         authorCity: 'Київ',
+        authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
         rating: 5,
         text: 'Неймовірна подорож! Організація на найвищому рівні: від зустрічі в аеропорту до кожного трекінгу вздовж левад. Краєвиди з піків просто захоплюють дух, а компанія зібралася дуже душевна. Обов\'язково поїду з вами ще!',
+        photos: [
+          'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600',
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600'
+        ],
         isPublished: true,
         order: 0
       },
@@ -402,8 +407,12 @@ const seedDatabase = async () => {
         travelDate: 'Липень 2024',
         authorName: 'Дмитро та Олена',
         authorCity: 'Львів',
+        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
         rating: 5,
         text: 'Це була мрія усього життя, і вона здійснилася на всі 100%. Водоспади, гейзери, чорні пляжі Віка та купання в термальних джерелах — вражень на роки вперед. Гід знав усі секретні локації без натовпів туристів!',
+        photos: [
+          'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=600'
+        ],
         isPublished: true,
         order: 1
       },
@@ -412,8 +421,12 @@ const seedDatabase = async () => {
         travelDate: 'Серпень 2024',
         authorName: 'Михайло Сидоренко',
         authorCity: 'Дніпро',
+        authorAvatar: '',
         rating: 5,
         text: 'Тур перевершив усі сподівання! Чіткий таймінг, комфортне житло та шалена краса норвезьких фіордів. Підйом на Язик Троля був викликом, але підтримка команди допомогла подолати весь маршрут на одному диханні.',
+        photos: [
+          'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600'
+        ],
         isPublished: true,
         order: 2
       }

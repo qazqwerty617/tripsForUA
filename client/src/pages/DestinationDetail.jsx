@@ -4,6 +4,7 @@ import { Calendar, Users, ArrowRight } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { trackPixelEvent } from '../utils/metaPixel'
 
 export default function DestinationDetail() {
   const { slug } = useParams()
@@ -22,6 +23,14 @@ export default function DestinationDetail() {
         api.get('/tours?status=active')
       ])
       setDestination(destRes.data)
+      if (destRes.data) {
+        trackPixelEvent('ViewContent', {
+          content_name: destRes.data.nameUk,
+          content_category: 'Destination',
+          content_ids: [destRes.data._id || slug],
+          content_type: 'destination'
+        })
+      }
       
       // Filter tours for this destination
       const destinationTours = toursRes.data.filter(
@@ -56,11 +65,11 @@ export default function DestinationDetail() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         <div className="absolute bottom-0 left-0 right-0 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-6xl">{destination.flag}</span>
+            <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-4">
+              <span className="text-4xl sm:text-5xl md:text-6xl">{destination.flag}</span>
               <div>
-                <h1 className="text-5xl font-bold mb-2">{destination.nameUk}</h1>
-                <p className="text-xl text-gray-200">{destination.country}</p>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-1 sm:mb-2">{destination.nameUk}</h1>
+                <p className="text-sm sm:text-lg md:text-xl text-gray-200">{destination.country}</p>
               </div>
             </div>
           </div>
@@ -68,22 +77,22 @@ export default function DestinationDetail() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
         {/* Description */}
-        <div className="bg-white rounded-2xl p-8 mb-12 shadow-md">
-          <h2 className="text-3xl font-bold mb-4">Про {destination.nameUk}</h2>
-          <p className="text-lg text-gray-700 leading-relaxed">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-12 shadow-md">
+          <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Про {destination.nameUk}</h2>
+          <p className="text-[15px] sm:text-base md:text-lg text-gray-700 leading-relaxed">
             {destination.description}
           </p>
         </div>
 
         {/* Gallery */}
         {destination.gallery && destination.gallery.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold mb-6">Фотогалерея</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="mb-6 sm:mb-12">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">Фотогалерея</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {destination.gallery.map((image, index) => (
-                <div key={index} className="aspect-[4/3] rounded-xl overflow-hidden">
+                <div key={index} className="aspect-[4/3] rounded-lg sm:rounded-xl overflow-hidden">
                   <img
                     loading="lazy" decoding="async"
                     src={image}
@@ -98,12 +107,12 @@ export default function DestinationDetail() {
 
         {/* Tours */}
         <div>
-          <h2 className="text-3xl font-bold mb-6">
+          <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">
             Доступні тури {tours.length > 0 && `(${tours.length})`}
           </h2>
           {tours.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center shadow-md">
-              <p className="text-xl text-gray-600 mb-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-12 text-center shadow-md">
+              <p className="text-base sm:text-xl text-gray-600 mb-4">
                 На даний момент немає доступних турів до цього напрямку
               </p>
               <Link to="/" className="text-primary-600 hover:text-primary-700 font-semibold">
@@ -137,12 +146,18 @@ export default function DestinationDetail() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {format(new Date(tour.startDate), 'd MMM', { locale: uk })}
+                          {tour.startDate && new Date(tour.startDate).getFullYear() > 2000
+                            ? format(new Date(tour.startDate), 'd MMM', { locale: uk })
+                            : 'Під запит'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        <span>{tour.availableSpots} місць</span>
+                        <span>
+                          {tour.tourType === 'exclusive' || tour.tourBasis === 'Індивідуальний' || !tour.maxParticipants
+                            ? 'Під запит'
+                            : `${tour.availableSpots} місць`}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t">
