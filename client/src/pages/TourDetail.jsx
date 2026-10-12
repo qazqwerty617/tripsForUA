@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Calendar, Users, Clock, Check, X, MapPin, MessageCircle, Instagram, Send } from 'lucide-react'
+import { Calendar, Users, Clock, Check, X, MapPin, MessageCircle, Instagram } from 'lucide-react'
 import api from '../utils/api'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -22,17 +22,6 @@ export default function TourDetail() {
     notes: '',
     selectedDate: ''
   })
-  const [showFloatingContact, setShowFloatingContact] = useState(false)
-
-  // Show floating contact button after 5 seconds of opening any tour program
-  useEffect(() => {
-    setShowFloatingContact(false)
-    const timer = setTimeout(() => {
-      setShowFloatingContact(true)
-    }, 5000)
-
-    return () => clearTimeout(timer)
-  }, [id])
 
   useEffect(() => {
     fetchTour()
@@ -596,56 +585,6 @@ export default function TourDetail() {
           </div>
         </div>
       </div>
-
-      {/* Floating Manager Contact Button (appears after 5s) */}
-      {showFloatingContact && (
-        <div className="fixed bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-[420px] md:w-1/3 min-w-[280px] max-w-[480px] animate-fade-in-up">
-          <div className="relative bg-[#161616]/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-primary-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.65)] flex items-center gap-2">
-            <a
-              href={
-                tour?.contactTelegram
-                  ? (tour.contactTelegram.startsWith('http')
-                      ? tour.contactTelegram
-                      : `https://t.me/${tour.contactTelegram.replace('@', '')}`)
-                  : 'https://t.me/tripsforukr_bot'
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                trackPixelEvent('Contact', {
-                  method: 'Telegram',
-                  tour: tour?.title,
-                  type: 'FloatingManagerPopup'
-                })
-                if (tour?._id) {
-                  api.trackSocialClick('telegram', {
-                    type: 'FloatingManagerButton',
-                    id: tour._id,
-                    name: tour.title
-                  }).catch(() => {})
-                }
-              }}
-              className="flex-1 flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#229ED9] to-[#0088cc] hover:from-[#1ea1dd] hover:to-[#0077b5] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:scale-[1.01] active:scale-[0.98] text-sm sm:text-base"
-            >
-              <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-              </span>
-              <Send className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              <span className="tracking-wide">Звʼязок з менеджером</span>
-            </a>
-
-            <button
-              onClick={() => setShowFloatingContact(false)}
-              className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition flex-shrink-0"
-              title="Закрити"
-              aria-label="Закрити"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

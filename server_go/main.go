@@ -88,6 +88,7 @@ func HandleSEORoute() gin.HandlerFunc {
 	canonicalRegex := regexp.MustCompile(`<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>`)
 
 	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		rawHtml := GetIndexHTML()
 		if rawHtml == "" {
 			c.File("../client/dist/index.html")
@@ -297,6 +298,7 @@ func ServeStaticOrIndex() gin.HandlerFunc {
 			return
 		}
 
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.File(filepath.Join(distPath, "index.html"))
 		c.Abort()
 	}
